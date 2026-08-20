@@ -90,7 +90,6 @@ if grep -RIn \
   --exclude-dir=.next \
   --exclude-dir=.open-next \
   --exclude-dir=.wrangler \
-  --exclude='cloudflare-workers-stub.js' \
   'from ["'\'']cloudflare:' \
   app db lib 2>/dev/null
 then
