@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useRef, useState, type DragEvent, type FormEvent } from "react";
 import { formatWorkItemSummary } from "@/lib/canonical";
 import type { Attachment, Preferences, WorkItem } from "@/lib/types";
 import { EmptyState, Eyebrow, StatusPill } from "./ui";
@@ -92,6 +92,10 @@ export function ItemDrawer({
   const [deleteMode, setDeleteMode] = useState(false);
   const [deleteText, setDeleteText] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [draggingAttachment, setDraggingAttachment] = useState(false);
+  const [attachmentError, setAttachmentError] = useState("");
+  const [uploadNames, setUploadNames] = useState<string[]>([]);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
   const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
   const [confirmAttachmentId, setConfirmAttachmentId] = useState<string | null>(null);
   const relatedAttachments = attachments.filter((attachment) => attachment.recordId === item.id && !attachment.archivedAt);
@@ -129,15 +133,60 @@ export function ItemDrawer({
   const email = () => {
     window.location.href = `mailto:?subject=${encodeURIComponent(`Devoted HQ - ${item.title}`)}&body=${encodeURIComponent(summary)}`;
   };
-  const upload = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const uploadFiles = async (files: File[]) => {
+    if (!files.length || uploading) return;
+
+    const oversized = files.filter((file) => file.size > 25 * 1024 * 1024);
+    if (oversized.length) {
+      setAttachmentError(
+        `Each attachment must be 25 MB or smaller. Too large: ${oversized.map((file) => file.name).join(", ")}`,
+      );
+      return;
+    }
+
     setUploading(true);
-    const data = new FormData(event.currentTarget);
-    data.set("recordId", item.id);
-    if (item.primaryActionId) data.set("actionId", item.primaryActionId);
-    const response = await fetch("/api/attachments", { method: "POST", body: data });
-    if (response.ok) { await onRefresh(); event.currentTarget.reset(); }
-    setUploading(false);
+    setAttachmentError("");
+    setUploadNames(files.map((file) => file.name));
+
+    try {
+      for (const file of files) {
+        const data = new FormData();
+        data.set("file", file);
+        data.set("recordId", item.id);
+        if (item.primaryActionId) data.set("actionId", item.primaryActionId);
+
+        const response = await fetch("/api/attachments", {
+          method: "POST",
+          body: data,
+        });
+
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => ({}))) as { error?: string };
+          throw new Error(payload.error ?? `Could not upload ${file.name}.`);
+        }
+      }
+
+      await onRefresh();
+    } catch (error) {
+      setAttachmentError(
+        error instanceof Error ? error.message : "One or more attachments could not be uploaded.",
+      );
+    } finally {
+      setUploading(false);
+      setUploadNames([]);
+      if (attachmentInputRef.current) attachmentInputRef.current.value = "";
+    }
+  };
+
+  const selectAttachments = (files: FileList | null) => {
+    if (!files) return;
+    void uploadFiles(Array.from(files));
+  };
+
+  const dropAttachments = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setDraggingAttachment(false);
+    selectAttachments(event.dataTransfer.files);
   };
   const deleteAttachment = async (attachmentId: string) => {
     setDeletingAttachmentId(attachmentId);
@@ -173,7 +222,123 @@ export function ItemDrawer({
   };
 
   return <div className="drawer-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><aside className="item-drawer" role="dialog" aria-modal="true" aria-label={item.title}><button className="modal-close" onClick={onClose} aria-label="Close item">×</button><div className="drawer-header"><div className="card-topline"><span>{item.typeLabel}</span><StatusPill value={item.status} /></div><h2>{item.title}</h2><p>{item.workstream} · {item.assignee || "Owner not recorded"}</p></div><div className="drawer-commandbar">{item.generatedPrompt ? <button className="button primary" onClick={() => onCopy(item.generatedPrompt!, "Prompt")}>⧉ Copy prompt</button> : null}<button className="button" onClick={() => onCopy(summary, "Summary")}>Copy summary</button><button className="button" onClick={share}>Share</button><button className="button" onClick={email}>Email</button></div>{editing ? <form className="edit-form drawer-edit" onSubmit={save}><label className="full">Title<input name="title" defaultValue={item.title} required /></label><label className="full">Overview<textarea name="body" defaultValue={item.body} /></label>{item.kind === "project" ? <label>Project stage<select name="status" defaultValue={item.lifecycleStatus}>{PROJECT_STAGES.map((value) => <option key={value}>{value}</option>)}</select></label> : item.kind === "content_idea" ? <label>Content stage<select name="status" defaultValue={item.lifecycleStatus}>{CONTENT_STAGES.map((value) => <option key={value}>{value}</option>)}</select></label> : <label>Status<select name="status" defaultValue={item.status}>{WORK_STATUSES.map((value) => <option key={value}>{value}</option>)}</select></label>}{lifecycleKind ? <label>Work status<select name="executionStatus" defaultValue={item.status}>{WORK_STATUSES.map((value) => <option key={value}>{value}</option>)}</select></label> : null}<label>Workstream<select name="workstream" defaultValue={item.workstream}>{WORKSTREAMS.map((value) => <option key={value}>{value}</option>)}</select></label><label>Priority<select name="priority" defaultValue={item.priority}><option>Low</option><option>Normal</option><option>High</option><option>Critical</option></select></label><label>Owner<input name="assignee" defaultValue={item.assignee ?? "Greg"} /></label><label>Effort (minutes)<input name="effortMinutes" type="number" defaultValue={item.effortMinutes ?? ""} /></label><label>Work block<input name="scheduledAt" type="datetime-local" defaultValue={scheduleInputValue(item.scheduledAt)} /></label><label>Due date<input name="dueDate" type="date" defaultValue={item.dueDate ?? ""} /></label><label>Follow-up<input name="followUpDate" type="date" defaultValue={item.followUpDate ?? ""} /></label><label>Waiting on<input name="waitingOn" defaultValue={item.waitingOn ?? ""} /></label><label>Related URL<input name="relatedUrl" type="url" defaultValue={item.relatedUrl ?? ""} /></label><label className="full">Tags<input name="tags" defaultValue={item.tags.join(", ")} /></label><label className="full">Generated prompt<textarea className="prompt-editor" name="generatedPrompt" defaultValue={item.generatedPrompt ?? ""} /></label><div className="modal-actions full"><button type="button" className="button" onClick={() => setEditing(false)}>Cancel</button><button className="button primary" disabled={saving}>{saving ? "Saving…" : "Save changes"}</button></div></form> : <><section className="drawer-section"><div className="detail-grid"><div><span>Work status</span><strong>{item.status}</strong></div>{lifecycleKind ? <div><span>{item.kind === "project" ? "Project stage" : "Content stage"}</span><strong>{item.lifecycleStatus}</strong></div> : null}<div><span>Priority / impact</span><strong>{item.priority} / {item.impact}</strong></div><div><span>Work block</span><strong>{item.scheduledAt || "Not Recorded"}</strong></div><div><span>Deadline</span><strong>{item.dueDate || "Not Recorded"}</strong></div><div><span>Follow-up</span><strong>{item.followUpDate || "Not Recorded"}</strong></div><div><span>Waiting on</span><strong>{item.waitingOn || "Not Recorded"}</strong></div></div><button className="button" onClick={() => setEditing(true)}>Edit master item</button></section>{item.body ? <section className="drawer-section"><Eyebrow>Overview</Eyebrow><p className="preserve-lines">{item.body}</p></section> : null}{item.generatedPrompt ? <section className="drawer-section prompt-section"><div><Eyebrow>Generated prompt</Eyebrow><button className="text-button" onClick={() => onCopy(item.generatedPrompt!, "Prompt")}>⧉ Copy prompt</button></div><pre>{item.generatedPrompt}</pre></section> : null}</>}
-      <section className="drawer-section"><Eyebrow>Attachments</Eyebrow>{relatedAttachments.length ? <div className="attachment-list">{relatedAttachments.map((attachment) => <div key={attachment.id} className="attachment-row">{attachment.available ? <a href={`/api/attachments?id=${encodeURIComponent(attachment.id)}`} target="_blank" rel="noreferrer"><strong>{attachment.fileName}</strong><span>{Math.round(attachment.sizeBytes / 1024)} KB · Open</span></a> : <div><strong>{attachment.fileName}</strong><span>{Math.round(attachment.sizeBytes / 1024)} KB · Original file not restored</span></div>}<div className="attachment-actions">{confirmAttachmentId === attachment.id ? <><button type="button" className="text-button danger" disabled={deletingAttachmentId === attachment.id} onClick={() => deleteAttachment(attachment.id)}>{deletingAttachmentId === attachment.id ? "Deleting…" : "Confirm delete"}</button><button type="button" className="text-button" disabled={deletingAttachmentId === attachment.id} onClick={() => setConfirmAttachmentId(null)}>Cancel</button></> : <button type="button" className="text-button danger" onClick={() => setConfirmAttachmentId(attachment.id)}>Delete</button>}</div></div>)}</div> : <p className="muted">No attachment metadata is linked to this item.</p>}<form className="attachment-upload" onSubmit={upload}><input name="file" type="file" required /><input name="caption" placeholder="Optional caption" /><button className="button" disabled={uploading}>{uploading ? "Uploading…" : "Add attachment"}</button></form></section>
+      <section className="drawer-section attachment-section">
+        <div className="attachment-heading">
+          <Eyebrow>Attachments</Eyebrow>
+          <span>{relatedAttachments.length} {relatedAttachments.length === 1 ? "file" : "files"}</span>
+        </div>
+
+        {relatedAttachments.length ? (
+          <div className="attachment-list">
+            {relatedAttachments.map((attachment) => (
+              <div key={attachment.id} className="attachment-row">
+                <div className="attachment-file-icon" aria-hidden="true">↗</div>
+                <div className="attachment-file">
+                  <strong>{attachment.fileName}</strong>
+                  <span>
+                    {Math.max(1, Math.round(attachment.sizeBytes / 1024))} KB
+                    {attachment.available ? "" : " · Original file not restored"}
+                  </span>
+                </div>
+                <div className={`attachment-actions ${confirmAttachmentId === attachment.id ? "confirming" : ""}`}>
+                  {confirmAttachmentId === attachment.id ? (
+                    <>
+                      <button
+                        type="button"
+                        className="attachment-action"
+                        disabled={deletingAttachmentId === attachment.id}
+                        onClick={() => setConfirmAttachmentId(null)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="attachment-action attachment-action-danger"
+                        disabled={deletingAttachmentId === attachment.id}
+                        onClick={() => deleteAttachment(attachment.id)}
+                      >
+                        {deletingAttachmentId === attachment.id ? "Deleting…" : "Delete"}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {attachment.available ? (
+                        <a
+                          className="attachment-action"
+                          href={`/api/attachments?id=${encodeURIComponent(attachment.id)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open
+                        </a>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="attachment-action attachment-action-danger"
+                        onClick={() => setConfirmAttachmentId(attachment.id)}
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="muted">No attachments yet.</p>
+        )}
+
+        <div
+          className={`attachment-dropzone ${draggingAttachment ? "dragging" : ""} ${uploading ? "uploading" : ""}`}
+          role="button"
+          tabIndex={0}
+          aria-label="Add attachments"
+          onClick={() => !uploading && attachmentInputRef.current?.click()}
+          onKeyDown={(event) => {
+            if (!uploading && (event.key === "Enter" || event.key === " ")) {
+              event.preventDefault();
+              attachmentInputRef.current?.click();
+            }
+          }}
+          onDragEnter={(event) => {
+            event.preventDefault();
+            if (!uploading) setDraggingAttachment(true);
+          }}
+          onDragOver={(event) => {
+            event.preventDefault();
+          }}
+          onDragLeave={(event) => {
+            if (event.currentTarget === event.target) setDraggingAttachment(false);
+          }}
+          onDrop={dropAttachments}
+        >
+          <input
+            ref={attachmentInputRef}
+            className="attachment-file-input"
+            type="file"
+            multiple
+            disabled={uploading}
+            onChange={(event) => selectAttachments(event.currentTarget.files)}
+          />
+          <div className="attachment-drop-icon" aria-hidden="true">＋</div>
+          <strong>
+            {uploading
+              ? `Uploading ${uploadNames.length} ${uploadNames.length === 1 ? "file" : "files"}…`
+              : draggingAttachment
+                ? "Drop files here"
+                : "Drop files here or click to browse"}
+          </strong>
+          <span>Select multiple files at once · 25 MB maximum per file</span>
+          {uploading && uploadNames.length ? (
+            <small>{uploadNames.join(" · ")}</small>
+          ) : null}
+        </div>
+
+        {attachmentError ? (
+          <p className="attachment-error" role="alert">{attachmentError}</p>
+        ) : null}
+      </section>
       <section className="drawer-section export-actions"><Eyebrow>Export this item</Eyebrow><div className="button-row"><button onClick={() => onExport("pdf", [item.id])}>PDF</button><button onClick={() => onExport("ics", [item.id])}>Calendar</button><button onClick={() => onExport("txt", [item.id])}>TXT</button><button onClick={() => onExport("eml", [item.id])}>EML</button></div></section>
       <section className="drawer-section danger-zone"><button className="button" onClick={archive}>{item.archivedAt ? "Restore item" : "Archive item"}</button><button className="text-button danger" onClick={() => setDeleteMode(!deleteMode)}>Permanently delete…</button>{deleteMode ? <div><p>Type <strong>DELETE</strong> to remove this item, its primary action, and attachment metadata.</p><input value={deleteText} onChange={(event) => setDeleteText(event.target.value)} /><button className="button danger-button" disabled={deleteText !== "DELETE"} onClick={permanentDelete}>Permanently delete</button></div> : null}</section></aside></div>;
 }
