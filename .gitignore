@@ -46,5 +46,3 @@ next-env.d.ts
 # OpenNext generated build output
 /.open-next/
 
-# OLD deployment script - DO NOT USE (pre-OpenNext binding fix)
-/deploy.sh
