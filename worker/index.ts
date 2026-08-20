@@ -27,6 +27,17 @@ interface ExecutionContext {
 
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    // Vinext receives Cloudflare bindings directly, while application server
+    // code consumes them through OpenNext's Cloudflare context API. Install
+    // the same context shape at the Worker boundary so both runtimes expose
+    // DB/R2 bindings consistently.
+    const cloudflareContextSymbol = Symbol.for("__cloudflare-context__");
+    globalThis[cloudflareContextSymbol] = {
+      env,
+      cf: request.cf,
+      ctx,
+    };
+
     const url = new URL(request.url);
 
     if (url.pathname === "/_vinext/image") {
