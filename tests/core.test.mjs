@@ -255,7 +255,7 @@ test("long PDFs paginate, preserve the sentinel, and normalize punctuation", asy
   await writeFile(pdfPath, bytes);
   const pdf = await PDFDocument.load(bytes);
   assert.ok(pdf.getPageCount() > 2);
-  const { stdout } = await execFileAsync("/usr/bin/pdftotext", [pdfPath, "-"]);
+  const { stdout } = await execFileAsync("pdftotext", [pdfPath, "-"]);
   assert.match(stdout, new RegExp(finalSentinel.replaceAll(".", "\\.")));
   assert.equal((stdout.match(/UNIQUE LONG TITLE START/g) ?? []).length, 1);
   assert.doesNotMatch(stdout, /\?/);

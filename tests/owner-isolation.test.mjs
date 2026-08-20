@@ -14,7 +14,7 @@ function request(path, email, init = {}) {
 
 test("a simulated second user cannot read the recovered workspace", async () => {
   const miniflare = new Miniflare({
-    compatibilityDate: "2026-08-05",
+    compatibilityDate: "2024-09-23",
     compatibilityFlags: ["nodejs_compat"],
     modules: true,
     script: "export default { fetch() { return new Response('ok') } }",
@@ -26,11 +26,15 @@ test("a simulated second user cannot read the recovered workspace", async () => 
       new URL("../drizzle/0000_lying_random.sql", import.meta.url),
       "utf8",
     );
-    await db.exec(migration);
+    const statements = migration
+      .split("--> statement-breakpoint")
+      .map((statement) => statement.trim())
+      .filter(Boolean);
 
-    const workerUrl = new URL("../dist/server/index.js", import.meta.url);
-    workerUrl.searchParams.set("isolation", `${process.pid}-${Date.now()}`);
-    const { default: worker } = await import(workerUrl.href);
+    for (const statement of statements) {
+      await db.prepare(statement).run();
+    }
+
     const env = {
       DB: db,
       BUCKET: {
@@ -41,6 +45,21 @@ test("a simulated second user cannot read the recovered workspace", async () => 
       ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) },
     };
     const ctx = { waitUntil() {}, passThroughOnException() {} };
+
+    // The Vinext artifact is imported directly by this Node integration test,
+    // so OpenNext's normal Worker entrypoint never installs its Cloudflare
+    // request context. Mirror that context here using the same global symbol
+    // consumed by getCloudflareContext().
+    const cloudflareContextSymbol = Symbol.for("__cloudflare-context__");
+    globalThis[cloudflareContextSymbol] = {
+      env,
+      cf: undefined,
+      ctx,
+    };
+
+    const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+    workerUrl.searchParams.set("isolation", `${process.pid}-${Date.now()}`);
+    const { default: worker } = await import(workerUrl.href);
 
     const ownerResponse = await worker.fetch(
       request("/api/bootstrap", ownerEmail),
@@ -86,6 +105,7 @@ test("a simulated second user cannot read the recovered workspace", async () => 
     );
     assert.equal(attachmentResponse.status, 404);
   } finally {
+    delete globalThis[Symbol.for("__cloudflare-context__")];
     await miniflare.dispose();
   }
 });
