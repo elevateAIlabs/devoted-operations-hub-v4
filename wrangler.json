@@ -1,0 +1,27 @@
+{
+  "name": "devotedhqapp2-v4",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2024-09-23",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "devotedhq-db-v4",
+      "database_id": "a11a653d-cdc8-41c8-b6a1-aecfda4da9de",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "bucket_name": "devotedhq-r2-v4",
+      "binding": "BUCKET",
+      "remote": true
+    }
+  ]
+}
