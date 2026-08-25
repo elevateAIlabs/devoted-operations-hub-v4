@@ -252,3 +252,159 @@ hats.
 Near-term architecture should avoid unnecessary Devoted-specific hard-coding
 where a lightweight abstraction benefits Devoted today, but should not incur
 premature SaaS complexity or paid infrastructure merely for speculative future use.
+
+---
+
+# Post-4.1 Strategic Roadmap
+
+This section records directional sequencing rather than a locked release scope.
+
+## Immediate Phase — OHO Production Observation
+
+After the accepted 4.1 release, Devoted HQ should spend time in normal
+production use before another feature release is immediately opened.
+
+The Operator should use the system for real Devoted Landscaping work rather
+than deliberately testing individual controls.
+
+Capture naturally occurring observations such as:
+
+- repeated friction
+- unnecessary clicks
+- confusing terminology
+- information that is difficult to find
+- features that are unexpectedly useful
+- features that are routinely ignored
+- workflow assumptions that do not survive real use
+- genuine production defects
+
+Unless a production-breaking defect is discovered, observations should be
+captured and triaged rather than immediately triggering implementation.
+
+## Next Planning Gate — Foundry Review 002
+
+The next substantive product-planning session should be:
+
+**Foundry Review 002 — OHO Findings + 4.2 Scope & Roadmap**
+
+Inputs should include:
+
+1. the existing canonical backlog
+2. new OHO production observations
+3. architectural and technical-debt considerations
+4. longer-term product strategy
+
+Candidate work should be evaluated using factors including:
+
+- Operator value
+- strategic leverage
+- implementation cost
+- implementation risk
+- architectural consequences
+- regression surface
+- appropriate release scope
+
+The purpose of Foundry Review 002 is to determine the next bounded release,
+not to begin implementation before scope is understood.
+
+## Preliminary Release Horizons
+
+These horizons are directional and are not commitments to specific version
+numbers or feature sets.
+
+### 4.2 Candidate Horizon — Operational UX Refinement
+
+Likely focus:
+
+- high-value friction discovered through OHO use
+- bounded presentation and interaction improvements
+- existing backlog items with strong daily operational value
+
+Current candidates include human-friendly date presentation,
+status/attention hierarchy, and Schedule navigation behavior.
+
+These candidates are **not yet approved 4.2 scope**.
+
+OHO production experience and Foundry Review 002 should determine final scope.
+
+### Subsequent Horizon — Schedule / Work-Model Refinement
+
+Potential areas include:
+
+- deeper Schedule behavior
+- recurrence semantics
+- Work Block role and visibility
+- time-related workflow concepts
+
+### Hardening Horizon
+
+Continue reducing architectural and regression risk through work such as:
+
+- canonical helper consolidation
+- semantic regression coverage
+- migration cleanup
+- legacy-data reconciliation
+- archived-state validation
+- adjacent technical debt
+
+### Platform Horizon
+
+When justified by real product needs, evaluate architecture for:
+
+- users
+- memberships
+- workspaces
+- permissions
+- tenant isolation
+- configurable platform concepts
+
+Do not introduce multi-tenant or SaaS complexity merely because it may be
+useful someday.
+
+### Intelligence Horizon
+
+D.A.I.S.Y. and other AI/automation capabilities should be introduced where
+intelligence provides genuine workflow leverage.
+
+Deterministic software remains preferable when deterministic software solves
+the problem more reliably and simply.
+
+Potential future intelligence areas include:
+
+- operational summaries
+- exception detection
+- prioritization
+- recommendations
+- natural-language interaction
+- human-in-the-loop automation
+
+### Long-Horizon Productization
+
+Continue evaluating whether capabilities proven inside Devoted Landscaping can
+become modular, configurable, or white-label-friendly platform capabilities.
+
+The governing sequence is:
+
+real Devoted problem
+-> OHO validates the problem
+-> Foundry identifies the reusable concept
+-> implementation preserves sensible extensibility
+-> Devoted proves the solution
+-> broader productization is considered
+
+Do not reverse this sequence by building speculative SaaS infrastructure before
+the reference customer proves the underlying value.
+
+## Technical-Debt Budget Principle
+
+Product releases may include a small amount of adjacent architectural cleanup
+when that cleanup reduces risk or prevents duplication.
+
+Technical cleanup should not be allowed to silently expand a bounded product
+release into a broad refactor.
+
+Existing example:
+
+The local `isDone()` / `actionable()` helpers in `components/views.tsx` should
+eventually converge on canonical helpers in `lib/canonical.ts`, but that cleanup
+was correctly excluded from 4.1.

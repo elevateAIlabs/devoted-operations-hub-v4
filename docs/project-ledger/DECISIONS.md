@@ -139,3 +139,77 @@ Current production resources include:
 - R2 binding: `BUCKET`
 - R2 bucket: `devotedhq-r2-v4`
 - Assets binding: `ASSETS`
+
+---
+
+# Development and Release Governance
+
+## Canonical Development Loop
+
+Meaningful Devoted HQ product changes should normally progress through:
+
+1. OHO observation or identified problem
+2. Foundry Review
+3. approved bounded scope
+4. controlled implementation on an appropriate Git branch
+5. local validation
+6. diff and architecture review
+7. Foundry Gate
+8. commit and merge to `main`
+9. push to GitHub
+10. production build
+11. controlled deployment
+12. production acceptance testing
+13. backlog / decision / release / acceptance ledger update
+14. release closure
+
+The process may be proportionally simplified for trivial documentation or
+low-risk maintenance changes.
+
+## Post-Release Observation Principle
+
+A successful production deployment does not automatically require immediate
+development of the next release.
+
+After meaningful releases, normal Operator use should be allowed to expose
+real workflow friction before subsequent scope is locked.
+
+Production-breaking defects remain exceptions and may require immediate
+intervention.
+
+## Observation Before Implementation
+
+Operator observations should normally enter the sequence:
+
+**OHO Observation -> Foundry Triage -> Backlog / Decision -> Release Candidate**
+
+An observation is not automatically a feature requirement.
+
+This protects the product from reactive implementation while preserving
+valuable operational findings.
+
+## Reference-Implementation Productization Rule
+
+Devoted Landscaping remains the reference implementation.
+
+Reusable product capabilities should preferably emerge from problems proven in
+the reference implementation rather than from speculative assumptions about
+future customers.
+
+The strategic progression is:
+
+**prove value -> identify reusable primitive -> generalize sensibly -> consider productization**
+
+not:
+
+**predict hypothetical SaaS requirements -> build infrastructure -> search for a problem**
+
+## AI / Automation Principle
+
+AI should not be added merely because a workflow can technically contain AI.
+
+The Foundry should prefer deterministic implementation when it is simpler,
+more reliable, easier to test, and sufficient for the job.
+
+AI and automation should be introduced when they provide material operational
+leverage that deterministic software does not provide as effectively.
