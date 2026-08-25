@@ -55,6 +55,7 @@ export default function DevotedApp() {
   const [data, setData] = useState<BootstrapPayload | null>(null);
   const [error, setError] = useState("");
   const [view, setView] = useState<ViewKey>(() => viewFromLocation());
+  const [taskFilter, setTaskFilter] = useState("Incomplete");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [quickAddKind, setQuickAddKind] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -97,9 +98,14 @@ export default function DevotedApp() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  const navigate = (target: string) => {
+  const navigate = (target: string, nextTaskFilter?: string) => {
     const next = target as ViewKey;
     if (!NAV.some(([key]) => key === next)) return;
+
+    if (next === "tasks" && nextTaskFilter) {
+      setTaskFilter(nextTaskFilter);
+    }
+
     setView(next);
     window.location.hash = `/${next}`;
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -194,6 +200,8 @@ export default function DevotedApp() {
     onCopy: copyText,
     onNavigate: navigate,
     onExport: downloadExport,
+    taskFilter,
+    onTaskFilterChange: setTaskFilter,
   };
   const openActions = data.workItems.filter((item) => item.primaryActionId && !item.archivedAt && item.status !== "Completed").length;
   const close = data.workItems.find((item) => item.kind === "accounting_period");

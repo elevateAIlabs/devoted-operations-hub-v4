@@ -22,6 +22,28 @@ const TYPE_LABELS: Record<string, string> = {
   task: "Task",
 };
 
+const ACTIONABLE_KINDS = new Set([
+  "task",
+  "project",
+  "content_idea",
+  "accounting_exception",
+]);
+
+export function isWorkItemDone(item: WorkItem): boolean {
+  return (
+    item.status === "Completed" ||
+    item.status === "Archived" ||
+    Boolean(item.completedAt)
+  );
+}
+
+export function isActionableWorkItem(item: WorkItem): boolean {
+  return (
+    !item.archivedAt &&
+    (Boolean(item.primaryActionId) || ACTIONABLE_KINDS.has(item.kind))
+  );
+}
+
 function parseMetadata(value: string): Record<string, unknown> {
   try {
     const parsed = JSON.parse(value || "{}");
@@ -260,6 +282,68 @@ export function projectSchedule(items: WorkItem[]): ScheduleProjection[] {
         ? a.item.title.localeCompare(b.item.title)
         : a.date.localeCompare(b.date),
     );
+}
+
+export type DashboardSummary = {
+  incomplete: WorkItem[];
+  dueToday: WorkItem[];
+  overdue: WorkItem[];
+  dueNext10Days: WorkItem[];
+  recentlyCompleted: WorkItem[];
+};
+
+function shiftDateKey(date: string, days: number): string {
+  const value = new Date(`${date}T12:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
+export function dashboardSummary(
+  items: WorkItem[],
+  today: string,
+): DashboardSummary {
+  // WorkItems should already be canonical, but de-duplicate by id here so
+  // every metric is guaranteed to count one master item at most once.
+  const uniqueItems = [...new Map(items.map((item) => [item.id, item])).values()];
+
+  const openActionable = uniqueItems.filter(
+    (item) => isActionableWorkItem(item) && !isWorkItemDone(item),
+  );
+
+  const next10DaysEnd = shiftDateKey(today, 10);
+  const sevenDayCompletionStart = shiftDateKey(today, -6);
+
+  return {
+    // This is the complete live actionable workload: one canonical item,
+    // not archived, and not completed.
+    incomplete: openActionable,
+
+    dueToday: openActionable.filter((item) => item.dueDate === today),
+
+    overdue: openActionable.filter(
+      (item) => Boolean(item.dueDate && item.dueDate < today),
+    ),
+
+    // Deliberately excludes today so this planning horizon does not
+    // overlap Due Today.
+    dueNext10Days: openActionable.filter(
+      (item) =>
+        Boolean(
+          item.dueDate &&
+            item.dueDate > today &&
+            item.dueDate <= next10DaysEnd,
+        ),
+    ),
+
+    recentlyCompleted: uniqueItems.filter((item) => {
+      if (item.archivedAt || !item.completedAt) return false;
+      const completedDate = chicagoDateParts(item.completedAt).date;
+      return (
+        completedDate >= sevenDayCompletionStart &&
+        completedDate <= today
+      );
+    }),
+  };
 }
 
 export function integritySummary(

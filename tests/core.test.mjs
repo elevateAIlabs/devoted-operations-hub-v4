@@ -200,6 +200,98 @@ test("a later follow-up stays on its own date", () => {
   );
 });
 
+test("dashboard intelligence separates current, overdue, upcoming, and completed work", () => {
+  const summary = core.dashboardSummary(
+    [
+      workItem({ id: "due-today", dueDate: "2026-08-23" }),
+      workItem({ id: "overdue", dueDate: "2026-08-22" }),
+      workItem({ id: "tomorrow", dueDate: "2026-08-24" }),
+      workItem({ id: "seven-days-out", dueDate: "2026-08-30" }),
+      workItem({ id: "ten-days-out", dueDate: "2026-09-02" }),
+      workItem({ id: "eleven-days-out", dueDate: "2026-09-03" }),
+      workItem({
+        id: "completed-due-today",
+        dueDate: "2026-08-23",
+        status: "Completed",
+        completedAt: "2026-08-23T15:00:00.000Z",
+      }),
+      workItem({
+        id: "archived-overdue",
+        dueDate: "2026-08-01",
+        archivedAt: "2026-08-20T12:00:00.000Z",
+      }),
+    ],
+    "2026-08-23",
+  );
+
+  assert.deepEqual(
+    summary.incomplete.map((item) => item.id),
+    [
+      "due-today",
+      "overdue",
+      "tomorrow",
+      "seven-days-out",
+      "ten-days-out",
+      "eleven-days-out",
+    ],
+  );
+  assert.deepEqual(summary.dueToday.map((item) => item.id), ["due-today"]);
+  assert.deepEqual(summary.overdue.map((item) => item.id), ["overdue"]);
+  assert.deepEqual(
+    summary.dueNext10Days.map((item) => item.id),
+    ["tomorrow", "seven-days-out", "ten-days-out"],
+  );
+  assert.deepEqual(
+    summary.recentlyCompleted.map((item) => item.id),
+    ["completed-due-today"],
+  );
+});
+
+test("dashboard completion window uses Chicago calendar dates and includes seven calendar days", () => {
+  const summary = core.dashboardSummary(
+    [
+      workItem({
+        id: "inside-window",
+        status: "Completed",
+        completedAt: "2026-08-17T05:00:00.000Z",
+      }),
+      workItem({
+        id: "outside-window",
+        status: "Completed",
+        completedAt: "2026-08-17T04:59:59.000Z",
+      }),
+      workItem({
+        id: "today-completed",
+        status: "Completed",
+        completedAt: "2026-08-23T18:00:00.000Z",
+      }),
+    ],
+    "2026-08-23",
+  );
+
+  assert.deepEqual(
+    summary.recentlyCompleted.map((item) => item.id),
+    ["inside-window", "today-completed"],
+  );
+});
+
+test("dashboard metrics count one canonical item once even if duplicate input is supplied", () => {
+  const duplicate = workItem({
+    id: "canonical-one",
+    dueDate: "2026-08-23",
+  });
+
+  const summary = core.dashboardSummary(
+    [duplicate, { ...duplicate }],
+    "2026-08-23",
+  );
+
+  assert.equal(summary.incomplete.length, 1);
+  assert.equal(summary.incomplete[0].id, "canonical-one");
+  assert.equal(summary.dueToday.length, 1);
+  assert.equal(summary.dueToday[0].id, "canonical-one");
+});
+
 test("copy summary and prompt use the same complete canonical item", () => {
   const item = workItem({
     kind: "content_idea",

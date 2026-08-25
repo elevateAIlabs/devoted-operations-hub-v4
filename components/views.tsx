@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { calendarCells, monthLabel } from "@/lib/calendar";
-import { projectSchedule } from "@/lib/canonical";
+import { dashboardSummary, projectSchedule } from "@/lib/canonical";
 import { resolveResources, selectResources } from "@/lib/resources";
 import type { ScheduleProjection, WorkItem } from "@/lib/types";
 import {
@@ -21,8 +21,10 @@ export type ViewProps = {
   onQuickAdd: (kind?: string) => void;
   onPatch: (item: WorkItem, changes: Record<string, unknown>) => Promise<void>;
   onCopy: (text: string, label?: string) => Promise<boolean>;
-  onNavigate: (view: string) => void;
+  onNavigate: (view: string, taskFilter?: string) => void;
   onExport: (format: string, ids?: string[]) => Promise<void>;
+  taskFilter: string;
+  onTaskFilterChange: (filter: string) => void;
 };
 
 const ACTIVE_KINDS = new Set(["task", "project", "content_idea", "accounting_exception"]);
@@ -105,6 +107,7 @@ function formatLongDate(date = new Date()) {
 
 export function DashboardView(props: ViewProps) {
   const today = todayKey();
+  const intelligence = dashboardSummary(props.items, today);
   const active = actionable(props.items).filter((item) => !isDone(item));
   const ranked = [...active].sort(
     (a, b) => attentionScore(b, today) - attentionScore(a, today),
@@ -137,6 +140,52 @@ export function DashboardView(props: ViewProps) {
         description="Due dates and scheduled work from every Devoted HQ module, ranked with a plain-language reason."
         action={<button className="button primary" onClick={() => props.onQuickAdd()}>Capture something</button>}
       />
+
+      <section className="dashboard-metrics" aria-label="Dashboard intelligence">
+        <button
+          className="dashboard-metric"
+          type="button"
+          onClick={() => props.onNavigate("tasks", "Incomplete")}
+        >
+          <span>Incomplete</span>
+          <strong>{intelligence.incomplete.length}</strong>
+          <small>Total live actionable workload</small>
+          <b>View tasks →</b>
+        </button>
+
+        <button
+          className="dashboard-metric"
+          type="button"
+          onClick={() => props.onNavigate("tasks", "Today")}
+        >
+          <span>Due today</span>
+          <strong>{intelligence.dueToday.length}</strong>
+          <small>Open commitments due today</small>
+          <b>View tasks →</b>
+        </button>
+
+        <button
+          className="dashboard-metric danger"
+          type="button"
+          onClick={() => props.onNavigate("tasks", "Overdue")}
+        >
+          <span>Overdue</span>
+          <strong>{intelligence.overdue.length}</strong>
+          <small>Past-due work needing a decision</small>
+          <b>View tasks →</b>
+        </button>
+
+        <button
+          className="dashboard-metric"
+          type="button"
+          onClick={() => props.onNavigate("tasks", "Next 10 Days")}
+        >
+          <span>Due next 10 days</span>
+          <strong>{intelligence.dueNext10Days.length}</strong>
+          <small>Upcoming commitments after today</small>
+          <b>View tasks →</b>
+        </button>
+      </section>
 
       <div className="dashboard-primary-grid">
         <section className="panel attention-panel">
@@ -222,9 +271,11 @@ export function DashboardView(props: ViewProps) {
 }
 
 const TASK_FILTERS = [
+  "Incomplete",
   "Today",
   "Next 3 Days",
   "This Week",
+  "Next 10 Days",
   "Overdue",
   "Waiting On",
   "Waiting on Andrew",
@@ -242,28 +293,80 @@ function plusDays(date: string, days: number) {
   return value.toISOString().slice(0, 10);
 }
 
+function mondayWeekBounds(date: string) {
+  const value = new Date(`${date}T12:00:00Z`);
+  const day = value.getUTCDay();
+  const daysSinceMonday = (day + 6) % 7;
+  const monday = plusDays(date, -daysSinceMonday);
+
+  return {
+    start: monday,
+    end: plusDays(monday, 6),
+  };
+}
+
 export function TasksView(props: ViewProps) {
-  const [filter, setFilter] = useState("All");
+  const filter = props.taskFilter;
+  const setFilter = props.onTaskFilterChange;
   const [query, setQuery] = useState("");
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const today = todayKey();
+  const week = mondayWeekBounds(today);
+  const intelligence = dashboardSummary(props.items, today);
+  const incompleteIds = new Set(intelligence.incomplete.map((item) => item.id));
+  const dueTodayIds = new Set(intelligence.dueToday.map((item) => item.id));
+  const overdueIds = new Set(intelligence.overdue.map((item) => item.id));
+  const next10DayIds = new Set(intelligence.dueNext10Days.map((item) => item.id));
+
   const tasks = actionable(props.items).filter((item) => {
     const haystack = `${item.title} ${item.body} ${item.workstream} ${item.assignee}`.toLowerCase();
     if (query && !haystack.includes(query.toLowerCase())) return false;
     if (filter === "Archived") return Boolean(item.archivedAt);
     if (item.archivedAt) return false;
-    if (filter === "Today") return item.dueDate === today || item.followUpDate === today || item.scheduledAt?.startsWith(today);
-    if (filter === "Next 3 Days") return Boolean(item.dueDate && item.dueDate >= today && item.dueDate <= plusDays(today, 3));
-    if (filter === "This Week") return Boolean(item.dueDate && item.dueDate >= today && item.dueDate <= plusDays(today, 7));
-    if (filter === "Overdue") return Boolean(item.dueDate && item.dueDate < today && !isDone(item));
-    if (filter === "Waiting On") return Boolean(item.waitingOn);
-    if (filter === "Waiting on Andrew") return Boolean(item.waitingOn?.toLowerCase().includes("andrew"));
-    if (filter === "Blocked") return item.status === "Blocked";
+
+    if (filter === "Incomplete") {
+      return incompleteIds.has(item.id);
+    }
+
+    if (filter === "Today") {
+      return dueTodayIds.has(item.id);
+    }
+
+    if (filter === "Next 3 Days") {
+      return Boolean(
+        item.dueDate &&
+          item.dueDate > today &&
+          item.dueDate <= plusDays(today, 3) &&
+          !isDone(item),
+      );
+    }
+
+    if (filter === "This Week") {
+      return Boolean(
+        item.dueDate &&
+          item.dueDate >= week.start &&
+          item.dueDate <= week.end &&
+          !isDone(item),
+      );
+    }
+
+    if (filter === "Next 10 Days") {
+      return next10DayIds.has(item.id);
+    }
+
+    if (filter === "Overdue") {
+      return overdueIds.has(item.id);
+    }
+
+    if (filter === "Waiting On") return Boolean(item.waitingOn) && !isDone(item);
+    if (filter === "Waiting on Andrew") return Boolean(item.waitingOn?.toLowerCase().includes("andrew")) && !isDone(item);
+    if (filter === "Blocked") return item.status === "Blocked" && !isDone(item);
     if (filter === "Recurring") return item.kind === "recurring_template";
     if (filter === "Unscheduled") return !item.scheduledAt && !item.dueDate && !isDone(item);
     if (filter === "Completed") return isDone(item);
     if (filter === "All") return true;
+
     return !isDone(item);
   });
   const toggle = (item: WorkItem) => setSelected((current) => current.includes(item.id) ? current.filter((id) => id !== item.id) : [...current, item.id]);
