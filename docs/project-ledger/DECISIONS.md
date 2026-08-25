@@ -213,3 +213,71 @@ more reliable, easier to test, and sufficient for the job.
 
 AI and automation should be introduced when they provide material operational
 leverage that deterministic software does not provide as effectively.
+
+# Platform Constitution Adoption
+
+## Constitutional Status
+
+Following the 4.1 production release and establishment of the canonical Foundry,
+Devoted HQ formally adopted a Platform Constitution.
+
+Canonical document:
+
+`docs/project-ledger/PLATFORM-CONSTITUTION.md`
+
+The Constitution preserves and updates the original architectural and product
+principles that guided Devoted HQ's transition from a Devoted-specific
+application toward a potentially configurable operating platform.
+
+## Purpose
+
+The Constitution exists above ordinary implementation decisions.
+
+It defines durable constraints intended to prevent a sequence of individually
+reasonable decisions from collectively causing architectural or product drift.
+
+Roadmaps may change.
+
+Backlog priority may change.
+
+Infrastructure may change.
+
+Implementations may change.
+
+The Constitution defines the principles those changes should normally continue
+to satisfy.
+
+## Governing Product Thesis
+
+Devoted HQ is treated as an operational coordination layer rather than a system
+that must replace every specialized business application.
+
+Its role is to know:
+
+- what needs attention
+- why it matters
+- where supporting information lives
+- what is waiting on whom
+- what happens next
+
+Devoted Landscaping remains the reference implementation and proving ground, but
+not the architectural definition of the platform.
+
+## Constitutional Review
+
+Material changes to the Platform Constitution require:
+
+- explicit Foundry Review
+- documented rationale
+- consideration of architectural and product implications
+- FHO approval
+- preservation of historical rationale through Git
+
+Constitutional principles should not be modified incidentally during unrelated
+feature development.
+
+## Foundry Verdict
+
+**APPROVED AND CANONIZED**
+
+The Platform Constitution becomes part of the durable Devoted HQ project ledger.

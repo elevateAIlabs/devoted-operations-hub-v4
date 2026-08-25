@@ -45,3 +45,16 @@ or deprecated, but they should not silently disappear.
 11. Deploy to infrastructure under our control.
 12. Verify in production.
 13. Record material decisions, backlog findings, release metadata, and acceptance results here.
+
+## Platform Constitution
+
+`PLATFORM-CONSTITUTION.md` defines the durable product and architectural
+invariants governing how Devoted HQ evolves.
+
+Major architecture, platform, infrastructure, integration, data-boundary, and
+product decisions should be evaluated against these principles.
+
+The Constitution is deliberately more durable than an ordinary backlog item or
+implementation decision.
+
+Material amendments require an explicit Foundry Review and FHO approval.
