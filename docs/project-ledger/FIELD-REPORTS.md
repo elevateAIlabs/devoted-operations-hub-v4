@@ -346,3 +346,183 @@ No Accounting rebuild is authorized by this Field Report.
 **Implementation authorized:** No
 
 **Immediate production change required:** No
+
+## Field Report 002 - Read-Only Inspection Findings
+
+Following OHO Field Report 002, SK performed two read-only source inspections of
+the current Devoted HQ 4.1 implementation.
+
+No files were changed during either inspection.
+
+The inspections clarified several previously unresolved product-semantics
+questions.
+
+### Project Stage and Work Status Are Separate by Design
+
+The current implementation intentionally maintains two state dimensions for
+Projects.
+
+**Project Stage / lifecycle status**
+
+Stored on the master Project record and used to represent the Project's position
+in the business lifecycle.
+
+Examples include:
+
+- New Lead
+- Scope in Progress
+- Estimate in Progress
+- Proposal Sent
+- Approved
+- Ready for Field
+- Active
+- Closeout Needed
+- Complete
+
+**Work Status / execution status**
+
+Stored through the Project's primary actionable execution state and used to
+represent whether the current actionable work is:
+
+- Not Started
+- in another supported execution state
+- Completed
+
+Canonicalization intentionally exposes:
+
+- `lifecycleStatus` from the master Project record
+- `status` from the actionable execution state when available
+
+This separation is therefore intentional architecture rather than accidental
+duplication.
+
+### Project Completion Semantics
+
+The convenience completion behavior for Projects updates execution state rather
+than automatically advancing the Project lifecycle stage to `Complete`.
+
+Therefore:
+
+**Completing the current actionable work is not equivalent to declaring the
+entire Project lifecycle complete.**
+
+This distinction may be useful, but the UI should communicate it more clearly.
+
+### Project Readiness Pipeline
+
+The Operations Project Readiness Pipeline currently includes every non-archived
+Project.
+
+Projects are placed into pipeline columns according to `lifecycleStatus`.
+
+The pipeline therefore answers:
+
+**Where is this Project in its lifecycle?**
+
+The underlying lifecycle-oriented model appears coherent and does not presently
+require architectural replacement.
+
+### Operations Queue
+
+The current Operations Queue contains actionable, incomplete items whose
+Workstream belongs to a hard-coded set of operational Workstreams:
+
+- Estimates and Proposals
+- Active Projects
+- Leads and Follow-Up
+- Fleet and Equipment
+- ADP and Payroll
+- HomeWorks and Customer Administration
+
+The UI then displays only the first eight matching items.
+
+The current implementation does not apply a distinct queue-ranking algorithm
+before that `slice(0, 8)` operation.
+
+Therefore the word `Queue` currently implies more prioritization or sequencing
+than the implementation actually provides.
+
+This is a product-semantics and UX finding.
+
+### What Is Missing?
+
+The current `What is missing?` section does not contain a missing-information
+classifier.
+
+It renders every non-archived Project and displays:
+
+- Project Stage
+- the first line of the Project body as `Next`, or `Needs information` if the
+  body is empty
+- `Waiting on ...`, otherwise the Deadline, otherwise `Deadline not recorded`
+
+Therefore the current section is closer to a Project-readiness or next-step
+summary than a true diagnostic of missing requirements.
+
+The label and the underlying behavior are presently mismatched.
+
+### Follow-Up Semantics
+
+The read-only inspection materially changed the interpretation of Follow-Up.
+
+Current application behavior treats `followUpDate` as an attention/check-back
+date.
+
+Examples in current logic include increasing attention ranking when Follow-Up is
+due and surfacing items waiting on another person when their Follow-Up date has
+arrived.
+
+Under this behavior, the following is legitimate:
+
+- Deadline: September 10
+- Follow-Up: September 4
+- Waiting on: another person
+
+This means:
+
+**Check back on September 4 because the underlying commitment is due September
+10.**
+
+Therefore a Follow-Up date occurring before a Deadline is not inherently
+invalid.
+
+The previously proposed candidate invariant:
+
+`Follow-Up >= Deadline`
+
+should not be implemented.
+
+### Schedule Navigation
+
+The read-only inspection also confirmed the previously logged Schedule
+navigation issue.
+
+Previous/next arrows currently change month state regardless of active Day,
+Week, Month, or 3 Months mode.
+
+Day and Week views depend on `selectedDate`, while the arrow behavior does not
+advance that selected date.
+
+This explains the stale or apparently ineffective navigation behavior observed
+by OHO.
+
+The Schedule navigation backlog item is therefore supported by direct
+implementation evidence.
+
+### Inspection Disposition
+
+**Project dual-state architecture:** Retain
+
+**Project lifecycle pipeline:** Retain
+
+**Project Stage / Work Status UX clarity:** Improvement warranted
+
+**Operations Queue semantics:** Improvement warranted
+
+**What is missing? semantics:** Label/behavior mismatch confirmed
+
+**Follow-Up >= Deadline candidate invariant:** Rejected / superseded by evidence
+
+**Schedule timeframe navigation deficiency:** Confirmed
+
+**Application change authorized by inspection alone:** No

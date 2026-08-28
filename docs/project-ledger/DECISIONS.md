@@ -358,3 +358,106 @@ New calendar-export architecture should not be designed around Work Block.
 This decision does not authorize Work Block removal.
 
 Existing dependencies should be audited before any destructive deprecation step.
+
+---
+
+# Project, Operations and Follow-Up Semantics
+
+These decisions follow the read-only source inspection prompted by OHO Field
+Report 002.
+
+## Project Stage and Work Status
+
+Projects retain two independent but related state dimensions.
+
+### Project Stage
+
+Project Stage describes the Project's position in its business lifecycle.
+
+Examples include:
+
+- New Lead
+- Scope in Progress
+- Estimate in Progress
+- Proposal Sent
+- Approved
+- Ready for Field
+- Active
+- Closeout Needed
+- Complete
+
+### Work Status
+
+Work Status describes the execution state of the Project's current actionable
+work.
+
+Project Stage and Work Status should not be collapsed into one field merely to
+simplify presentation.
+
+The distinction represents useful operational information.
+
+## Project Completion
+
+Completing the current actionable work does not automatically mean the entire
+Project lifecycle is complete.
+
+A Project may therefore have completed execution work without automatically
+moving its Project Stage to `Complete`.
+
+Any future automation connecting the two states must be justified by explicit
+workflow evidence rather than inferred merely from similar terminology.
+
+## Operations Project Readiness Pipeline
+
+The Project Readiness Pipeline remains lifecycle-oriented.
+
+Its primary question is:
+
+**Where is each Project in its lifecycle?**
+
+Project Stage / `lifecycleStatus` is the appropriate classification dimension for
+that pipeline.
+
+## Follow-Up Date
+
+Follow-Up Date is defined as:
+
+**The date on which Devoted HQ should bring an item back to the operator's
+attention for a check-in, reminder, or subsequent action.**
+
+Follow-Up may legitimately occur:
+
+- before Deadline
+- on Deadline
+- after Deadline
+
+Therefore Devoted HQ should not establish a general invariant requiring
+Follow-Up to be greater than or equal to Deadline.
+
+This supersedes the earlier candidate `Follow-Up >= Deadline` rule recorded for
+investigation in OHO Field Report 002.
+
+The historical candidate remains in the ledger as part of the reasoning trail.
+
+## Operations Semantic Honesty
+
+User-facing labels should describe what the underlying product behavior actually
+does.
+
+The current Operations Queue and `What is missing?` labels require refinement
+because their names imply behavior not fully represented by the current
+implementation.
+
+A terminology change may be appropriate before introducing substantially more
+complex underlying behavior.
+
+## Readiness Diagnostic Discipline
+
+Devoted HQ should not create a complex Project-readiness rules engine merely to
+justify the existing `What is missing?` label.
+
+If true readiness diagnostics later demonstrate meaningful OHO value, they
+should be designed as an explicit product capability with defined rules and
+acceptance criteria.
+
+Until then, simpler and more truthful presentation is preferred.

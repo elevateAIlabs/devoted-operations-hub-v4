@@ -768,3 +768,178 @@ Replacement should require demonstrated operator or platform value.
 
 **Dedicated Foundry strategic review required before implementation scope is
 approved.**
+
+---
+
+# Project / Operations Inspection Disposition
+
+The following dispositions result from the read-only source inspection initiated
+by OHO Field Report 002.
+
+## Project Stage / Work Status UX Clarity
+
+### Confirmed Model
+
+Projects intentionally have two state dimensions:
+
+- Project Stage = lifecycle position
+- Work Status = execution state of current actionable work
+
+### Improvement Opportunity
+
+Improve UI terminology and information hierarchy so users can understand the
+distinction without needing knowledge of the underlying data model.
+
+Review surfaces including:
+
+- Quick Add
+- Project item drawer
+- Operations
+- Tasks
+- Search results
+- completion controls
+
+Do not collapse the two state models merely for cosmetic simplicity.
+
+---
+
+## Operations Queue Semantics
+
+### Current Behavior
+
+The current Operations Queue displays up to eight actionable, incomplete items
+from selected operational Workstreams.
+
+It does not currently implement a distinct queue-ranking algorithm before
+displaying the first eight matches.
+
+### Product Options
+
+#### Option A - Semantic Rename
+
+Rename the section to describe its current behavior more honestly.
+
+Candidate concept:
+
+**Operational Open Loops**
+
+This is the lower-complexity option.
+
+#### Option B - Genuine Prioritized Queue
+
+Evolve the section into a true attention-ranked Operations Queue using shared
+canonical prioritization semantics.
+
+Possible inputs may include:
+
+- overdue state
+- Critical / High priority
+- upcoming Deadline
+- due Follow-Up
+- waiting-on state
+- impact
+- other canonical attention signals where justified
+
+### Architecture Constraint
+
+Do not create another independent ranking implementation inside
+`OperationsView`.
+
+If prioritized queue behavior is approved, it should consume shared canonical
+attention semantics wherever practical.
+
+### Foundry Direction
+
+Prefer truthful terminology immediately when implementation scope permits.
+
+Evaluate genuine queue ranking separately as a bounded capability.
+
+---
+
+## Project Readiness Summary / What Is Missing
+
+### Confirmed Mismatch
+
+The current `What is missing?` section does not calculate missing Project
+requirements.
+
+It currently displays all non-archived Projects with basic lifecycle and
+next-step context.
+
+### Near-Term Direction
+
+Prefer renaming the section to match what it actually provides rather than
+building speculative diagnostic complexity.
+
+Candidate concepts for UX review include:
+
+- Project Readiness
+- Project Next Steps
+- Readiness Snapshot
+
+Final wording requires Priya/OHO UX review.
+
+### Future Capability
+
+A genuine readiness diagnostic may be considered later if production evidence
+demonstrates value.
+
+Potential diagnostic inputs might eventually include missing:
+
+- Deadline
+- Owner
+- next action
+- required lifecycle information
+- waiting-on resolution
+- stage-specific information
+
+These examples are exploratory, not approved requirements.
+
+---
+
+## Follow-Up / Deadline Integrity - Disposition
+
+### Earlier Candidate
+
+OHO Field Report 002 recorded the candidate rule:
+
+`Follow-Up >= Deadline`
+
+### Inspection Result
+
+**Candidate rejected.**
+
+Current product behavior supports Follow-Up as a reminder/check-back date, which
+may legitimately precede Deadline.
+
+### Canonical Direction
+
+Do not add general validation requiring Follow-Up to occur on or after Deadline.
+
+Instead, preserve independent Deadline and Follow-Up semantics.
+
+---
+
+## Schedule Navigation - Confirmed Implementation Deficiency
+
+Read-only inspection confirmed that previous/next Schedule arrows currently
+change month state regardless of active mode.
+
+Day and Week views use `selectedDate`, while the existing arrow behavior does
+not advance that selected date.
+
+This directly explains OHO's previously reported behavior.
+
+### Desired Direction
+
+Previous/next controls should become timeframe-aware:
+
+- Day -> previous / next day
+- Week -> previous / next week
+- Month -> previous / next month
+- 3 Months -> previous / next three-month period, subject to UX review
+
+Displayed range and displayed work should update together.
+
+This finding strengthens the existing Schedule navigation backlog item and does
+not require a duplicate independent feature.
