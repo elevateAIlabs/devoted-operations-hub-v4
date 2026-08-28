@@ -281,3 +281,80 @@ feature development.
 **APPROVED AND CANONIZED**
 
 The Platform Constitution becomes part of the durable Devoted HQ project ledger.
+
+---
+
+# Post-4.1 Field Evidence and Export Decisions
+
+## Production Evidence vs Product Conclusions
+
+Real-world production observations should be preserved separately from the
+conclusions later drawn from them.
+
+Canonical responsibilities:
+
+- `FIELD-REPORTS.md` records observed real-world production evidence.
+- `BACKLOG.md` records possible future action and investigation.
+- `DECISIONS.md` records approved product, architecture, and governance choices.
+- `RELEASES.md` records what shipped.
+- release acceptance documents record whether a release met its approved
+  acceptance criteria.
+
+A Field Report does not automatically create a requirement.
+
+It provides evidence the Foundry may use when deciding what deserves action.
+
+## Export UX Principle
+
+Export functionality should be designed around the user's intended outcome
+rather than exposing implementation file formats as the primary interaction when
+a clearer user-oriented action exists.
+
+PDF and TXT may legitimately remain file/document exports.
+
+Calendar export is different because the typical user goal is to add the work
+item to a calendar rather than merely possess an ICS file.
+
+The user-facing capability should therefore move toward **Add to Calendar** while
+retaining standards-based ICS interoperability where useful.
+
+## Calendar Event Date Rule
+
+For the initial Add-to-Calendar capability, `Deadline` is the sole canonical
+source for the generated calendar-event date.
+
+Because Deadline currently represents a date rather than a date/time:
+
+- generated events default to all-day
+- Devoted HQ does not infer a time
+- Devoted HQ does not infer a duration
+- Follow-up does not silently substitute for Deadline
+- Work Block does not determine calendar-event timing
+
+Where supported, the destination calendar may allow the user to modify the event
+before or after saving.
+
+If no Deadline exists, another date field should not be silently substituted.
+
+## Calendar Authentication Direction
+
+The initial calendar-handoff investigation should prefer a zero-auth,
+user-confirmed workflow when that workflow can satisfy the product requirement.
+
+OAuth, calendar-write permissions, stored calendar credentials, or equivalent
+authenticated integration infrastructure should not be introduced merely to
+avoid downloading an ICS file.
+
+Authenticated calendar integration may be reconsidered if future requirements
+demonstrate that direct calendar writing or synchronization provides sufficient
+value to justify the additional complexity and security surface.
+
+## Work Block and New Capabilities
+
+Work Block is a deprecation candidate based on OHO production experience.
+
+New calendar-export architecture should not be designed around Work Block.
+
+This decision does not authorize Work Block removal.
+
+Existing dependencies should be audited before any destructive deprecation step.

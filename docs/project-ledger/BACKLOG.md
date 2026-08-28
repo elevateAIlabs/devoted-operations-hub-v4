@@ -408,3 +408,221 @@ Existing example:
 The local `isDone()` / `actionable()` helpers in `components/views.tsx` should
 eventually converge on canonical helpers in `lib/canonical.ts`, but that cleanup
 was correctly excluded from 4.1.
+
+---
+
+# Post-4.1 OHO Field Findings
+
+The following findings originated from substantial real-world production use
+following the 4.1 release.
+
+See `FIELD-REPORTS.md` for the underlying production evidence.
+
+## Urgency / Priority Filtering
+
+### Problem
+
+OHO does not currently have an obvious and intuitive way to isolate work items
+by urgency level.
+
+This becomes increasingly useful when the active workload contains many
+simultaneous workstreams and priorities.
+
+### Desired Capability
+
+Allow Tasks to be filtered by urgency/priority.
+
+High-value cases include:
+
+- High only
+- Critical only
+- potentially High + Critical together
+
+### Scope Discipline
+
+This is currently a filtering requirement.
+
+It does not require redesigning the underlying urgency model merely to provide
+the requested capability.
+
+Final interaction design should be evaluated through Foundry review.
+
+---
+
+## Work Item Export, Sharing and Portability
+
+Export should be evaluated as a broader product capability rather than as three
+unrelated file-format features.
+
+Current export surfaces include:
+
+- PDF
+- TXT
+- ICS
+
+The user-facing goal should be based on what the user is trying to accomplish
+rather than requiring the user to understand the implementation format.
+
+Potential capability areas include:
+
+- human-readable document export
+- portable text representation
+- Add to Calendar
+- standards-based calendar-file fallback
+- future share/destination workflows where justified
+
+Export destinations should derive from consistent canonical work-item semantics
+rather than independently inventing interpretations of application state.
+
+---
+
+## Add to Calendar / Calendar Handoff
+
+### Product Goal
+
+Provide a low-friction way for a user to take a Devoted HQ work item and add it
+to a calendar without requiring the user to manually manage an ICS file when a
+more direct standards-based handoff is available.
+
+The primary user-facing concept should be:
+
+**Add to Calendar**
+
+rather than requiring the user to understand:
+
+**Export ICS**
+
+ICS should remain available as a standards-based interoperability mechanism and
+fallback.
+
+### Approved Calendar Semantic Baseline
+
+For the initial Add-to-Calendar capability:
+
+- `Deadline` is the sole canonical source for the calendar-event date.
+- Generated events should default to all-day.
+- Devoted HQ should not infer an event time.
+- Devoted HQ should not infer a duration.
+- Follow-up should not silently substitute for Deadline.
+- Work Block should not determine calendar-event timing.
+- Users may modify time, duration, calendar, and other event details in the
+  destination calendar where supported.
+
+If a work item has no Deadline, Devoted HQ should not silently select another
+date field as the event date.
+
+### OHO iOS Evidence
+
+On OHO's iPhone using Chrome, the current ICS workflow is technically functional
+but operationally cumbersome.
+
+Observed workflow:
+
+Devoted HQ
+-> download ICS
+-> Chrome Downloads / Files
+-> open or share ICS
+-> third-party "ICS To Calendar" Shortcut
+-> usable calendar-import experience
+
+Opening the ICS directly through Files displays the event but does not provide
+OHO with a sufficiently direct Add-to-Calendar workflow.
+
+The Shortcut currently used by OHO was obtained from RoutineHub and provides a
+bridge between the downloaded ICS data and the usable calendar-add experience.
+
+### Zero-Auth Calendar Handoff Research Spike
+
+Before implementation, investigate reliable cross-platform approaches including:
+
+- HTTPS-served `text/calendar`
+- `Content-Disposition` behavior
+- direct HTTPS ICS handling
+- iOS Safari behavior
+- iOS Chrome behavior
+- Web Share API / share-sheet behavior where applicable
+- `data:text/calendar` behavior
+- Google Calendar pre-populated event URLs
+- Outlook / Microsoft calendar mechanisms
+- Apple / device-calendar behavior
+- desktop versus mobile behavior
+- standards-compliant ICS fallback
+
+### Authentication Constraint
+
+Do not introduce OAuth or calendar-write permissions merely to solve calendar
+export unless research demonstrates that the desired user experience cannot be
+satisfactorily achieved without them.
+
+A user-confirmed calendar handoff is preferable to authenticated calendar-write
+infrastructure when it satisfies the workflow.
+
+---
+
+## PDF Export Presentation Refinement
+
+### Finding
+
+Real production exports demonstrate that the underlying exported content is
+generally correct.
+
+The primary improvement opportunity is presentation and layout.
+
+### Observed Presentation Issues
+
+- insufficient vertical clearance between the black Devoted HQ header and the
+  beginning of work-item content
+- title/body content can appear uncomfortably close to the header
+- short exports can contain excessive unused whitespace
+- page composition should adapt more gracefully to short versus long records
+- long prompt/content exports need cleaner pagination and continuation behavior
+- typography, spacing, metadata density, and visual hierarchy should be reviewed
+  holistically
+
+### Preserve
+
+The refinement should preserve the established Devoted HQ visual identity.
+
+Useful existing structure such as footer/page numbering should not be discarded
+without a specific reason.
+
+### Scope Discipline
+
+This is primarily a presentation/layout refinement.
+
+Current evidence does not indicate that the canonical exported work-item content
+model itself is defective.
+
+---
+
+## Work Block Deprecation Direction
+
+OHO reports that Work Block does not materially improve the current operational
+workflow.
+
+Work Block remains a deprecation candidate.
+
+New calendar-export architecture should not depend on Work Block for event
+timing.
+
+This does not authorize immediate removal.
+
+Before deprecation or removal, audit dependencies across:
+
+- UI
+- canonicalization
+- Schedule
+- exports
+- APIs
+- migrations
+- historical data
+- automated tests
+
+Preferred progression remains:
+
+1. understand dependencies
+2. minimize prominence
+3. hide from normal OHO workflows if justified
+4. observe impact
+5. deprecate
+6. remove only when proven safe

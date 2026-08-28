@@ -58,3 +58,27 @@ The Constitution is deliberately more durable than an ordinary backlog item or
 implementation decision.
 
 Material amendments require an explicit Foundry Review and FHO approval.
+
+## Production Field Reports
+
+`FIELD-REPORTS.md` preserves structured evidence from real-world production use
+of Devoted HQ by OHO and future reference users.
+
+Field Reports record observations rather than automatically defining
+requirements.
+
+A Field Report may later inform:
+
+- backlog items
+- Foundry Reviews
+- product or architecture decisions
+- acceptance criteria
+- release planning
+
+The separation is intentional:
+
+- Field Reports record what happened.
+- Backlog records what may deserve action.
+- Decisions record what has been approved.
+- Releases record what shipped.
+- Acceptance records whether a release satisfied its approved criteria.
