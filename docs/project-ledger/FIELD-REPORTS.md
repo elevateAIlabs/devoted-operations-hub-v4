@@ -181,3 +181,168 @@ Dependencies and consequences should be evaluated before implementation.
 **Architecture research required:** Calendar export / Add-to-Calendar
 
 **Immediate production change required:** No
+
+---
+
+# OHO Field Report 002
+
+**Date:** 2026-08-28
+**Release:** Devoted HQ 4.1
+**Environment:** Production
+**Observer:** OHO / Reference Customer
+
+## Overall Assessment
+
+**PRODUCT SEMANTICS AND WORKFLOW OBSERVATION**
+
+Continued OHO production use identified several areas where existing behavior,
+terminology, or product structure requires clarification or further Foundry
+review.
+
+These observations do not establish that the underlying implementation is
+defective.
+
+They identify areas where operational meaning, user expectations, and current
+platform behavior should be reconciled before implementation changes are made.
+
+## Projects and Operations
+
+OHO identified uncertainty regarding the relationship between Project status and
+what appears in the Operations tab.
+
+The current product behavior needs to be inspected and clarified.
+
+Questions include:
+
+- What Project states or conditions cause information to surface in Operations?
+- Does Operations represent Projects themselves, actionable work associated with
+  Projects, operational exceptions, or some combination?
+- How does Project status influence inclusion or exclusion?
+- Is current behavior consistent with the intended canonical relationship between
+  Projects and operational work?
+
+This should initially be treated as a product-semantics and
+information-architecture question.
+
+Current implementation should be inspected before behavior is changed.
+
+## Deadline and Follow-Up Date Semantics
+
+OHO identified a semantic concern when a Follow-Up date occurs before the
+Deadline.
+
+Operationally:
+
+- Deadline represents when work is due.
+- Follow-Up represents when the item should be brought back for subsequent
+  attention.
+
+Under those semantics, a Follow-Up occurring before the Deadline may be
+contradictory.
+
+A candidate canonical invariant is therefore:
+
+`Follow-Up >= Deadline`
+
+when both values exist.
+
+This Field Report does not itself establish that invariant.
+
+Foundry review should determine:
+
+- whether same-day Deadline and Follow-Up should be valid
+- whether Follow-Up must strictly occur after Deadline
+- how existing records that violate the eventual rule should be handled
+- whether validation belongs in UI, API/canonical logic, or both
+- whether the current meaning of Follow-Up is sufficiently precise to support
+  the invariant
+
+No production data should be silently mutated as a consequence of introducing
+future validation.
+
+## Operations Navigation
+
+OHO expects previous/next navigation controls in the dashboard-style tile above
+the two primary Operations sections.
+
+This observation should be reconciled with the existing backlog requirement for
+time-frame-aware previous/next Schedule navigation rather than automatically
+creating an unrelated navigation system.
+
+The intended behavior and current Operations time context should be inspected
+before implementation.
+
+## Operations Queue and What's Missing
+
+OHO requested clarification of the meaning and classification rules for:
+
+- Operations Queue
+- What's Missing
+
+The current implementation should be inspected to determine exactly how records
+are classified into these sections.
+
+Foundry review should distinguish:
+
+1. current implemented classification logic
+2. intended product semantics
+3. whether the current labels communicate those semantics clearly
+4. whether any mismatch is primarily logic, UX/explainability, or both
+
+The fact that the reference operator cannot readily explain why an item belongs
+to one section is itself meaningful usability evidence even if the underlying
+classification logic proves technically correct.
+
+## Accounting
+
+OHO identified Accounting as requiring a broader strategic rethink.
+
+This should not initially be treated as a conventional request to redesign the
+Accounting tab.
+
+The larger question is:
+
+**What role should Accounting and financial operations play within the Devoted
+HQ platform under the Platform Constitution?**
+
+A dedicated Foundry strategic review should evaluate whether Devoted HQ should:
+
+- own accounting workflows
+- coordinate accounting workflows
+- summarize accounting information
+- link to specialized accounting systems and canonical artifacts
+- orchestrate selected financial operations
+- combine some of these responsibilities within explicit boundaries
+
+The review should specifically consider:
+
+- Devoted HQ's coordination-layer product thesis
+- canonical versus external financial data
+- specialized-system boundaries
+- Monthly Close workflows
+- master financial workbook access
+- integrations and external systems
+- operator usefulness
+- future platform generality
+- security and financial-data boundaries
+- the approximately $0 incremental-cost constraint
+- whether replacing specialized accounting functionality would create genuine
+  value
+
+No Accounting rebuild is authorized by this Field Report.
+
+## Field Report Disposition
+
+**Release-blocking regression:** None identified
+
+**Product-semantics clarification required:** Yes
+
+**Backlog / research updates required:** Yes
+
+**Foundry strategic review required:** Accounting
+
+**Canonical validation candidate:** Deadline / Follow-Up relationship
+
+**Implementation authorized:** No
+
+**Immediate production change required:** No

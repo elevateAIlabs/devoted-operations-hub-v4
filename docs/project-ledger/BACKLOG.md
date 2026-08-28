@@ -626,3 +626,145 @@ Preferred progression remains:
 4. observe impact
 5. deprecate
 6. remove only when proven safe
+
+---
+
+# OHO Field Report 002 Follow-Up
+
+See `FIELD-REPORTS.md` for the underlying 2026-08-28 production observations.
+
+## Projects -> Operations Semantics Audit
+
+### Question
+
+Clarify how Project status and Project state affect what surfaces in the
+Operations tab.
+
+Before changing behavior, inspect the current implementation and document:
+
+- current inclusion/exclusion rules
+- relationship between Project status and Operations
+- whether Operations surfaces Projects, actionable work, exceptions, or a
+  combination
+- whether current behavior matches intended canonical product semantics
+
+### Scope Discipline
+
+Do not redesign Projects or Operations merely because the relationship is
+currently unclear.
+
+First establish what the application does and what the product intends the
+relationship to mean.
+
+---
+
+## Deadline / Follow-Up Integrity
+
+### Candidate Rule
+
+When both Deadline and Follow-Up exist, evaluate establishing the canonical
+constraint:
+
+`Follow-Up >= Deadline`
+
+### Open Questions
+
+Foundry review must determine:
+
+- whether same-day Deadline and Follow-Up is valid
+- whether Follow-Up should instead be strictly later than Deadline
+- treatment of legacy records that violate the eventual rule
+- appropriate UI validation
+- appropriate API/canonical validation
+- whether Follow-Up's current product definition supports this constraint
+
+### Data Safety
+
+Do not automatically rewrite historical or production records merely because a
+new validation rule is introduced.
+
+---
+
+## Operations Navigation Controls
+
+OHO expects previous/next navigation arrows in the dashboard-style control above
+the two primary Operations sections.
+
+Before implementation:
+
+- inspect the current Operations time-frame behavior
+- reconcile this request with the existing time-frame-aware navigation backlog
+- determine whether the existing navigation capability should be extended rather
+  than duplicated
+- define expected previous/next behavior for each supported time frame
+
+---
+
+## Operations Queue / What's Missing Classification Audit
+
+Inspect and document the current classification logic for:
+
+- Operations Queue
+- What's Missing
+
+Produce an explicit classification model showing which conditions cause an item
+to appear in each section.
+
+Foundry review should then determine:
+
+- whether the current rules match intended product semantics
+- whether labels are sufficiently understandable
+- whether explanatory UI is required
+- whether any underlying classification logic should change
+
+Do not change classification behavior until current and intended semantics are
+both understood.
+
+---
+
+## Accounting Strategic Foundry Review
+
+### Strategic Question
+
+Determine the appropriate role of Accounting and financial operations within
+Devoted HQ under the Platform Constitution.
+
+This is intentionally broader than an Accounting-tab redesign.
+
+### Review Areas
+
+Evaluate whether Devoted HQ should primarily:
+
+- own
+- coordinate
+- summarize
+- link
+- orchestrate
+
+accounting and financial workflows, and where combinations are justified.
+
+Review:
+
+- coordination-layer product thesis
+- specialized-system boundaries
+- canonical versus external financial data
+- Monthly Close workflow
+- master financial workbook
+- financial quick links and supporting artifacts
+- integrations
+- operator workflow
+- security and financial-data boundaries
+- platform generality
+- approximately $0 incremental-cost constraint
+
+### Constitutional Constraint
+
+Do not rebuild specialized accounting functionality merely because Devoted HQ
+can technically do so.
+
+Replacement should require demonstrated operator or platform value.
+
+### Status
+
+**Dedicated Foundry strategic review required before implementation scope is
+approved.**
