@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { PDFDocument } from "pdf-lib";
-import { calendarCells } from "../lib/calendar.ts";
+import { calendarCells, calendarWeekBounds } from "../lib/calendar.ts";
 import {
   canonicalizeRecords,
   formatWorkItemSummary,
@@ -256,4 +256,32 @@ test("Operations uses approved 4.2 semantic labels", async () => {
   assert.match(source, /title="Project Readiness"/);
   assert.doesNotMatch(source, /title="Operations queue"/);
   assert.doesNotMatch(source, /title="What is missing\?"/);
+});
+
+test("calendar week uses Sunday through Saturday boundaries", () => {
+  const august28 = calendarWeekBounds("2026-08-28");
+  assert.deepEqual(august28, {
+    start: "2026-08-23",
+    end: "2026-08-29",
+  });
+
+  const september1 = calendarWeekBounds("2026-09-01");
+  assert.deepEqual(september1, {
+    start: "2026-08-30",
+    end: "2026-09-05",
+  });
+});
+
+test("Schedule Week view renders the calendar week containing selectedDate", async () => {
+  const source = await readFile(
+    new URL("../components/views.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /calendarWeekBounds\(selectedDate\)/);
+  assert.match(source, /plusDays\(selectedWeek\.start, index\)/);
+  assert.doesNotMatch(
+    source,
+    /plusDays\(selectedDate, index\)/,
+  );
 });

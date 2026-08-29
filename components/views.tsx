@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { calendarCells, monthLabel } from "@/lib/calendar";
+import { calendarCells, calendarWeekBounds, monthLabel } from "@/lib/calendar";
 import { dashboardSummary, projectSchedule } from "@/lib/canonical";
 import { resolveResources, selectResources } from "@/lib/resources";
 import type { ScheduleProjection, WorkItem } from "@/lib/types";
@@ -511,8 +511,8 @@ function calendarHeading(
   }
 
   if (mode === "Week") {
-    const end = plusDays(selectedDate, 6);
-    const startLabel = new Date(`${selectedDate}T12:00:00Z`).toLocaleDateString(
+    const week = calendarWeekBounds(selectedDate);
+    const startLabel = new Date(`${week.start}T12:00:00Z`).toLocaleDateString(
       "en-US",
       {
         month: "short",
@@ -520,12 +520,15 @@ function calendarHeading(
         timeZone: "UTC",
       },
     );
-    const endLabel = new Date(`${end}T12:00:00Z`).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      timeZone: "UTC",
-    });
+    const endLabel = new Date(`${week.end}T12:00:00Z`).toLocaleDateString(
+      "en-US",
+      {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        timeZone: "UTC",
+      },
+    );
     return `${startLabel} – ${endLabel}`;
   }
 
@@ -582,6 +585,7 @@ export function ScheduleView(props: ViewProps) {
 
   const cells = calendarCells(year, month);
   const selectedAgenda = byDate.get(selectedDate) ?? [];
+  const selectedWeek = calendarWeekBounds(selectedDate);
 
   const syncMonthToDate = (dateKey: string) => {
     const date = new Date(`${dateKey}T12:00:00Z`);
@@ -765,7 +769,7 @@ export function ScheduleView(props: ViewProps) {
         ) : mode === "Week" ? (
           <Agenda
             dates={Array.from({ length: 7 }, (_, index) =>
-              plusDays(selectedDate, index),
+              plusDays(selectedWeek.start, index),
             )}
             byDate={byDate}
             onOpen={props.onOpen}

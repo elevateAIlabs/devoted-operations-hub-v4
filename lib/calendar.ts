@@ -20,3 +20,19 @@ export function monthLabel(year: number, month: number) {
     timeZone: "UTC",
   }).format(new Date(Date.UTC(year, month, 1)));
 }
+
+export function calendarWeekBounds(date: string) {
+  const value = new Date(`${date}T12:00:00Z`);
+  const daysSinceSunday = value.getUTCDay();
+
+  const start = new Date(value);
+  start.setUTCDate(start.getUTCDate() - daysSinceSunday);
+
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 6);
+
+  return {
+    start: start.toISOString().slice(0, 10),
+    end: end.toISOString().slice(0, 10),
+  };
+}
