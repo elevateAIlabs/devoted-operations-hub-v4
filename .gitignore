@@ -46,3 +46,6 @@ next-env.d.ts
 # OpenNext generated build output
 /.open-next/
 
+
+# Devoted HQ local QA runtime snapshots
+.local-qa-snapshots/
