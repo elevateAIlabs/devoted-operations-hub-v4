@@ -226,3 +226,44 @@ The active localhost database was not changed during the rehearsal.
 
 The real localhost refresh remains separately gated after the tool is committed,
 merged, and pushed.
+
+
+### 4.2A6 — Schedule Density + Text Containment
+
+Commit:
+
+`b580ddc contain schedule density and long titles`
+
+Status:
+
+**IMPLEMENTED / VISUALLY ACCEPTED / MERGED TO MAIN**
+
+OHO localhost acceptance identified two Schedule presentation issues after the
+realistic August 29 QA dataset was introduced:
+
+1. long titles could exceed Day / Week event-column boundaries;
+2. crowded Month cells could expose only a clipped portion of a third event card.
+
+A6 corrected these issues by:
+
+- adding defensive Day / Week text containment;
+- limiting Month preview cards to two complete events;
+- representing additional Month workload through `+N more`;
+- preserving the complete selected-day agenda below the Month calendar.
+
+Validation:
+
+- OHO visual acceptance passed;
+- contract tests passed;
+- production build passed;
+- realistic localhost dataset remained 105 records / 44 actions / 16 attachment metadata records;
+- frozen August 5 regression fixture remained unchanged;
+- no production D1 mutation occurred;
+- no production R2 mutation occurred.
+
+The integrated Devoted HQ 4.2 localhost release-candidate pass now governs the
+next deployment gate.
+
+See:
+
+`ACCEPTANCE-4.2.md`
