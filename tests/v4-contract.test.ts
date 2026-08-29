@@ -8,6 +8,7 @@ import {
   canonicalizeRecords,
   formatWorkItemSummary,
   integritySummary,
+  projectCalendarExportSchedule,
   projectSchedule,
 } from "../lib/canonical.ts";
 import { makePdf } from "../lib/exporters.ts";
@@ -59,12 +60,33 @@ test("legacy content, prompt, task, and action facets resolve to one master item
   assert.match(item.generatedPrompt ?? "", /^You are acting as Devoted Landscaping/);
 });
 
-test("same-day work and due roles collapse while the follow-up stays on August 5", () => {
+test("operational schedule uses one active due/follow-up position", () => {
   const item = items.find((candidate) => candidate.id === truckIdeaId)!;
-  const schedule = projectSchedule([item]);
+
+  const beforeDue = projectSchedule([item], "2026-08-02");
+  assert.equal(beforeDue.length, 1);
+  assert.equal(beforeDue[0].date, "2026-08-03");
+  assert.deepEqual(new Set(beforeDue[0].roles), new Set(["work", "due"]));
+
+  const afterDue = projectSchedule([item], "2026-08-04");
+  assert.equal(afterDue.length, 2);
+
+  const work = afterDue.find((entry) => entry.date === "2026-08-03");
+  const resurfaced = afterDue.find((entry) => entry.date === "2026-08-05");
+
+  assert.deepEqual(work?.roles, ["work"]);
+  assert.deepEqual(resurfaced?.roles, ["follow-up"]);
+});
+
+test("calendar export projection remains isolated from 4.2 operational resurfacing", () => {
+  const item = items.find((candidate) => candidate.id === truckIdeaId)!;
+  const schedule = projectCalendarExportSchedule([item]);
+
   assert.equal(schedule.length, 2);
+
   const august3 = schedule.find((entry) => entry.date === "2026-08-03");
   const august5 = schedule.find((entry) => entry.date === "2026-08-05");
+
   assert.deepEqual(new Set(august3?.roles), new Set(["work", "due"]));
   assert.deepEqual(august5?.roles, ["follow-up"]);
 });

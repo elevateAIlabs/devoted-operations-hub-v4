@@ -7,7 +7,7 @@ import {
 } from "pdf-lib";
 import {
   formatWorkItemSummary,
-  projectSchedule,
+  projectCalendarExportSchedule,
   workItemCopyModel,
 } from "./canonical";
 import type { WorkItem } from "./types";
@@ -134,7 +134,7 @@ function localIcsDateTime(value: string) {
 }
 
 export function makeIcs(items: WorkItem[]) {
-  const projections = projectSchedule(items);
+  const projections = projectCalendarExportSchedule(items);
   const generatedAt = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
   const events: string[] = [];
   for (const projection of projections) {

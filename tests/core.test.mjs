@@ -170,34 +170,101 @@ test("August 5 backup reconciles to one canonical identity per master item", () 
   assert.equal(items.some((item) => item.id === linkedPrompt.id), false);
 });
 
-test("one item with three same-day schedule roles creates one projection and one count", () => {
+test("same-day invalid follow-up does not create a duplicate operational role", () => {
   const item = workItem({
-    scheduledAt: "2026-08-03T09:30",
+    id: "same-day-follow-up",
+    scheduledAt: "2026-08-03T10:00:00",
     dueDate: "2026-08-03",
     followUpDate: "2026-08-03",
   });
-  const projections = core.projectSchedule([item]);
+
+  const projections = core.projectSchedule([item], "2026-08-02");
+
   assert.equal(projections.length, 1);
   assert.equal(projections[0].date, "2026-08-03");
-  assert.deepEqual(projections[0].roles, ["work", "due", "follow-up"]);
-  assert.equal(projections[0].timeLabel, "9:30 AM");
-  assert.equal(new Date("2026-08-03T12:00:00Z").getUTCDay(), 1);
+  assert.deepEqual(projections[0].roles, ["work", "due"]);
 });
 
-test("a later follow-up stays on its own date", () => {
+test("later follow-up becomes the one active deadline position after due date passes", () => {
   const item = workItem({
-    scheduledAt: "2026-08-03T09:30",
+    id: "later-follow-up",
+    scheduledAt: "2026-08-03T10:00:00",
     dueDate: "2026-08-03",
     followUpDate: "2026-08-05",
   });
-  const projections = core.projectSchedule([item]);
+
+  const beforeDue = core.projectSchedule([item], "2026-08-02");
+
   assert.deepEqual(
-    projections.map(({ date, roles }) => ({ date, roles })),
+    beforeDue.map(({ date, roles }) => ({ date, roles })),
     [
       { date: "2026-08-03", roles: ["work", "due"] },
+    ],
+  );
+
+  const afterDue = core.projectSchedule([item], "2026-08-04");
+
+  assert.deepEqual(
+    afterDue.map(({ date, roles }) => ({ date, roles })),
+    [
+      { date: "2026-08-03", roles: ["work"] },
       { date: "2026-08-05", roles: ["follow-up"] },
     ],
   );
+});
+
+test("overdue item without follow-up remains represented on original due date", () => {
+  const item = workItem({
+    id: "overdue-no-follow-up",
+    scheduledAt: null,
+    dueDate: "2026-08-03",
+    followUpDate: null,
+  });
+
+  assert.deepEqual(
+    core.projectSchedule([item], "2026-08-08").map(
+      ({ date, roles }) => ({ date, roles }),
+    ),
+    [
+      { date: "2026-08-03", roles: ["due"] },
+    ],
+  );
+});
+
+test("legacy follow-up on or before due date is ignored for resurfacing", () => {
+  const item = workItem({
+    id: "legacy-follow-up",
+    scheduledAt: null,
+    dueDate: "2026-08-03",
+    followUpDate: "2026-08-02",
+  });
+
+  assert.deepEqual(
+    core.projectSchedule([item], "2026-08-08").map(
+      ({ date, roles }) => ({ date, roles }),
+    ),
+    [
+      { date: "2026-08-03", roles: ["due"] },
+    ],
+  );
+});
+
+test("completed item does not actively project due or follow-up positions", () => {
+  const item = workItem({
+    id: "completed-follow-up",
+    scheduledAt: null,
+    dueDate: "2026-08-03",
+    followUpDate: "2026-08-05",
+    status: "Completed",
+    completedAt: "2026-08-03T18:00:00.000Z",
+    primaryAction: {
+      ...action(),
+      status: "Completed",
+      completedAt: "2026-08-03T18:00:00.000Z",
+    },
+  });
+
+  assert.deepEqual(core.projectSchedule([item], "2026-08-08"), []);
 });
 
 test("dashboard intelligence separates current, overdue, upcoming, and completed work", () => {

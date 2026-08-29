@@ -233,10 +233,28 @@ function chicagoDateParts(value: string): {
   return { date, time: time || null };
 }
 
-export function projectSchedule(items: WorkItem[]): ScheduleProjection[] {
+function currentChicagoDateKey(): string {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = formatter.formatToParts(new Date());
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((entry) => entry.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
+function buildScheduleProjection() {
   const projections = new Map<
     string,
-    { date: string; item: WorkItem; roles: Set<ScheduleRole>; timeLabel: string | null }
+    {
+      date: string;
+      item: WorkItem;
+      roles: Set<ScheduleRole>;
+      timeLabel: string | null;
+    }
   >();
 
   const add = (
@@ -246,14 +264,17 @@ export function projectSchedule(items: WorkItem[]): ScheduleProjection[] {
     timeLabel: string | null = null,
   ) => {
     if (!date) return;
+
     const normalizedDate = date.slice(0, 10);
     const key = `${normalizedDate}:${item.id}`;
     const existing = projections.get(key);
+
     if (existing) {
       existing.roles.add(role);
       if (!existing.timeLabel && timeLabel) existing.timeLabel = timeLabel;
       return;
     }
+
     projections.set(key, {
       date: normalizedDate,
       item,
@@ -262,26 +283,107 @@ export function projectSchedule(items: WorkItem[]): ScheduleProjection[] {
     });
   };
 
+  const finish = (): ScheduleProjection[] =>
+    [...projections.values()]
+      .map((projection) => ({
+        ...projection,
+        roles: [...projection.roles],
+      }))
+      .sort((a, b) =>
+        a.date === b.date
+          ? a.item.title.localeCompare(b.item.title)
+          : a.date.localeCompare(b.date),
+      );
+
+  return { add, finish };
+}
+
+/**
+ * Operational Devoted HQ Schedule projection.
+ *
+ * Due Date remains the authoritative deadline.
+ *
+ * Before or on the Due Date:
+ *   the incomplete item is represented at the Due Date.
+ *
+ * After the Due Date:
+ *   if a valid post-deadline Follow-Up exists, the item resurfaces there;
+ *   otherwise it remains represented against its original Due Date.
+ *
+ * Follow-Up values on or before Due Date are treated as legacy/incompatible
+ * resurfacing values and are ignored for projection without mutating storage.
+ *
+ * Work Block remains an independent scheduling concept.
+ */
+export function projectSchedule(
+  items: WorkItem[],
+  today: string = currentChicagoDateKey(),
+): ScheduleProjection[] {
+  const { add, finish } = buildScheduleProjection();
+
   for (const item of items) {
     if (item.archivedAt) continue;
+
     if (item.scheduledAt) {
       const scheduled = chicagoDateParts(item.scheduledAt);
       add(item, scheduled.date, "work", scheduled.time);
     }
+
+    if (isWorkItemDone(item)) continue;
+
+    const dueDate = item.dueDate?.slice(0, 10) ?? null;
+    const followUpDate = item.followUpDate?.slice(0, 10) ?? null;
+
+    if (!dueDate) {
+      continue;
+    }
+
+    if (today <= dueDate) {
+      add(item, dueDate, "due");
+      continue;
+    }
+
+    const validFollowUp =
+      Boolean(followUpDate) &&
+      followUpDate! > dueDate;
+
+    if (validFollowUp) {
+      add(item, followUpDate, "follow-up");
+    } else {
+      add(item, dueDate, "due");
+    }
+  }
+
+  return finish();
+}
+
+/**
+ * External calendar/export projection.
+ *
+ * This preserves the pre-4.2 projection behavior so operational Schedule
+ * semantics can evolve without silently changing ICS/export behavior.
+ *
+ * Calendar export has a separate approved product contract and will be
+ * deliberately revised through that workstream.
+ */
+export function projectCalendarExportSchedule(
+  items: WorkItem[],
+): ScheduleProjection[] {
+  const { add, finish } = buildScheduleProjection();
+
+  for (const item of items) {
+    if (item.archivedAt) continue;
+
+    if (item.scheduledAt) {
+      const scheduled = chicagoDateParts(item.scheduledAt);
+      add(item, scheduled.date, "work", scheduled.time);
+    }
+
     add(item, item.dueDate, "due");
     add(item, item.followUpDate, "follow-up");
   }
 
-  return [...projections.values()]
-    .map((projection) => ({
-      ...projection,
-      roles: [...projection.roles],
-    }))
-    .sort((a, b) =>
-      a.date === b.date
-        ? a.item.title.localeCompare(b.item.title)
-        : a.date.localeCompare(b.date),
-    );
+  return finish();
 }
 
 export type DashboardSummary = {
