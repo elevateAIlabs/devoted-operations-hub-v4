@@ -593,3 +593,130 @@ The next implementation release should preserve the distinction between:
 - and external calendar-event projection.
 
 No schema migration is required for the Schedule projection change itself.
+
+---
+
+# OHO Field Report 003
+
+**Date:** 2026-08-28 / 2026-08-29
+**Release:** Devoted HQ 4.2 pre-deployment
+**Environment:** Localhost QA compared with live DEV
+**Observer:** OHO / Reference Customer
+
+## Overall Assessment
+
+**STALE QA DATA CREATED A FALSE-DEFECT SIGNAL AND REVEALED A TEST-DATA
+ARCHITECTURE GAP**
+
+During Schedule validation, OHO initially observed that localhost appeared not
+to display expected task populations.
+
+The live DEV environment contained substantially more current operational data,
+including recent Due Dates and Follow-Up Dates.
+
+Localhost appeared sparse and historically skewed.
+
+This initially made the new Schedule implementation appear defective.
+
+## Subsequent Validation
+
+OHO deliberately navigated localhost to dates known to contain records in the
+historical local dataset.
+
+Observed behavior then confirmed:
+
+- selecting July 30 correctly surfaced July 30 tasks
+- selecting July 29 correctly surfaced July 29 tasks
+- switching from Month to Week surfaced the applicable seven-day task
+  population
+- moving the Week range updated the associated task population
+
+This materially reduced confidence that the Schedule task-detail surface itself
+was defective.
+
+The principal confounding factor was stale localhost data.
+
+## Dataset Investigation
+
+Read-only investigation later confirmed that localhost contained the historical
+August 5 seeded dataset:
+
+- 70 records
+- 9 actions
+- 6 attachments
+
+A fresh live DEV full JSON export contained:
+
+- 105 records
+- 44 actions
+- 16 attachments
+
+The fresh snapshot also contained much richer Due / Follow-Up date coverage.
+
+This explains why localhost provided a materially less representative Schedule
+QA workload.
+
+## Seed Lifecycle Finding
+
+The application seed fixture is:
+
+`data/devoted-hq-backup.json`
+
+`lib/repository.ts` seeds an empty workspace from this file.
+
+Once owner-scoped records already exist, `ensureSeeded()` does not overwrite
+them.
+
+Therefore the local Miniflare D1 can remain based on an older fixture across
+many subsequent development sessions.
+
+## Attachment Finding
+
+The historical local six attachment records were unavailable and lacked storage
+keys.
+
+The fresh DEV snapshot contained 16 structurally valid, available attachment
+metadata records with R2 storage keys.
+
+The full JSON backup does not contain attachment binaries.
+
+Therefore refreshing local D1 from a fresh backup does not by itself reproduce
+production attachment availability.
+
+D1 metadata and R2 binaries must be handled independently.
+
+## Operator Impact
+
+Stale QA data can cause OHO to:
+
+- misclassify correct behavior as broken
+- test against unrealistic task density
+- miss contemporary Due / Follow-Up scenarios
+- spend time investigating false regressions
+
+This is therefore not merely a convenience issue.
+
+Dataset provenance is part of QA reliability.
+
+## Disposition
+
+**Schedule defect confirmed:** No
+
+**Schedule improvement identified:** Yes, Week semantics changed to
+Sunday-Saturday calendar weeks in 4.2A4
+
+**QA architecture gap confirmed:** Yes
+
+**Production-data defect:** No
+
+**Production mutation required:** No
+
+**Approved architectural response:** Local QA snapshot-refresh framework
+
+**Attachment binary refresh required for basic Schedule testing:** No
+
+**Future implementation required:** Yes
+
+See:
+
+`LOCAL-QA-DATA.md`

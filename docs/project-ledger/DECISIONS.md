@@ -605,3 +605,61 @@ date exists:
 
 This compatibility rule protects Schedule behavior without rewriting historical
 data.
+
+---
+
+# 4.2A5 Decision — Frozen Regression Fixture vs Refreshable Local QA Data
+
+**Status:** APPROVED
+
+**Date:** 2026-08-29
+
+## Decision
+
+Devoted HQ will treat the repository recovery fixture and the mutable localhost
+QA dataset as separate architectural concepts.
+
+`data/devoted-hq-backup.json` remains a stable historical/regression fixture.
+
+Realistic localhost testing should instead be supported by an explicit
+local-only snapshot-refresh workflow using a separately exported and audited
+full JSON backup.
+
+An already-populated local Miniflare D1 must not be expected to refresh merely
+because the repository seed file changes.
+
+## Rationale
+
+4.2 Schedule testing showed that stale local data can create false defect
+signals when the implementation is tested against a materially older
+operational workload.
+
+At the same time, continuously replacing the deterministic repository fixture
+with current production data would weaken regression reproducibility and blur
+the boundary between source control and operational data.
+
+Separating these concepts provides both:
+
+- deterministic regression coverage
+- realistic current-workload QA
+
+## Attachment Boundary
+
+JSON backup preserves attachment metadata, not attachment binaries.
+
+Attachment metadata refresh and local R2 binary mirroring are therefore
+different operations.
+
+Local attachment metadata must not report a file as available unless the binary
+actually exists in local QA storage.
+
+## Safety Boundary
+
+The local refresh workflow must never mutate remote D1 or R2.
+
+Production deployment, Git changes, schema migration, local QA refresh, and
+attachment mirroring remain separately gated operations.
+
+See:
+
+`LOCAL-QA-DATA.md`

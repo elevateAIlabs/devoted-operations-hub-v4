@@ -1065,3 +1065,40 @@ keep the incomplete item represented against its original Due Date as overdue.
 Add regression coverage for this case.
 
 Do not mutate the stored record merely to satisfy projection behavior.
+
+---
+
+## P11 — Local QA Snapshot Refresh + Provenance
+
+4.2A5 established that the current localhost Miniflare D1 was originally seeded
+from the frozen August 5 recovery fixture and does not automatically refresh as
+the live DEV workspace evolves.
+
+Implement a safe local-only refresh workflow.
+
+Requirements:
+
+- accept an explicitly selected full JSON backup
+- validate structure and relational integrity before mutation
+- verify the target is local Miniflare D1
+- refuse remote D1 targets
+- preserve/archive existing local QA state before replacement
+- import current records/actions/preferences/migration metadata
+- handle attachment metadata without falsely asserting binary availability
+- report source `exportedAt`, snapshot hash, import timestamp, and resulting
+  counts
+- leave `data/devoted-hq-backup.json` frozen by default
+- never mutate DEV/production D1 or R2
+
+The first implementation should prefer **metadata-only attachment refresh**.
+
+Optional local R2 binary mirroring should remain a separately designed and
+approved capability.
+
+See:
+
+`LOCAL-QA-DATA.md`
+
+Origin:
+
+4.2A5 Schedule QA investigation / OHO localhost testing.

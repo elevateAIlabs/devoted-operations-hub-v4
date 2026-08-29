@@ -78,3 +78,111 @@ captured in `BACKLOG.md`, including:
 - canonical helper consolidation
 - archived-state live validation
 - legacy attachment reconciliation
+
+---
+
+## 4.2 — Operational Schedule Semantics and UX
+
+Status:
+
+**IMPLEMENTATION MERGED TO MAIN / NOT YET CLOUDFLARE DEPLOYED**
+
+Current canonical Git head after 4.2A4:
+
+`38f0481 use calendar weeks in schedule view`
+
+### 4.2A1 — Schedule Semantic Engine
+
+Commit:
+
+`9bb4af0 implement schedule follow-up resurfacing semantics`
+
+Canonical behavior introduced:
+
+- one active Due / Follow-Up operational Schedule position
+- post-deadline Follow-Up resurfacing
+- original Due Date remains overdue truth
+- invalid legacy Follow-Up dates do not move items backward
+- completed items do not actively resurface
+- Work Block remains independent
+- ICS/calendar-export projection remains isolated
+
+No database migration was performed.
+
+### 4.2A2 — Schedule UI + Timeframe Navigation
+
+Commit:
+
+`211af63 improve schedule states and timeframe navigation`
+
+Introduced:
+
+- explicit Upcoming / Overdue / Follow-Up Schedule presentation
+- overdue-since-original-Due-Date explanation
+- accessible non-color semantic labels
+- Day navigation by one day
+- Week navigation by one week
+- Month navigation by one month
+- 3 Months navigation by three months
+- Today synchronization
+- preservation of same-day Work Block + Due meaning
+
+### 4.2A3 — Operations Terminology
+
+Commit:
+
+`9452430 clarify operations terminology`
+
+Terminology updates:
+
+- Operations Queue -> Needs Action
+- Open loops -> Open work
+- What is missing? -> Project Readiness
+
+No classification, filtering, ranking, lifecycle, or database behavior changed.
+
+### 4.2A4 — Calendar Week Semantics
+
+Commit:
+
+`38f0481 use calendar weeks in schedule view`
+
+Week now means:
+
+**Sunday through Saturday calendar week containing the selected date**
+
+Behavior includes:
+
+- Month -> Week preserves selected focal date
+- Week navigation moves exactly one calendar week
+- Week heading reflects actual visible date range
+- task population follows the visible Sunday-Saturday range
+- cross-month weeks are supported
+
+### 4.2A5 — Local QA Data Integrity
+
+Status:
+
+**ARCHITECTURE / DOCUMENTATION TRACK**
+
+4.2 QA exposed that localhost was operating against the historical August 5
+seeded dataset while the live DEV workspace had materially evolved.
+
+Investigation confirmed:
+
+- frozen repo fixture: 70 records / 9 actions / 6 attachments
+- fresh August 29 DEV export: 105 records / 44 actions / 16 attachments
+- local Miniflare D1 persisted the historical seed
+- replacing the JSON fixture would not itself refresh populated local D1
+- JSON export contains attachment metadata rather than attachment binaries
+- local R2 binary state is separate
+
+The approved response is a dedicated local QA snapshot-refresh framework rather
+than using live D1 directly or continually rewriting the deterministic Git
+fixture.
+
+See:
+
+`LOCAL-QA-DATA.md`
+
+No Cloudflare deployment has occurred for 4.2 at the time of this entry.
