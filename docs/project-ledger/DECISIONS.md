@@ -461,3 +461,147 @@ should be designed as an explicit product capability with defined rules and
 acceptance criteria.
 
 Until then, simpler and more truthful presentation is preferred.
+
+## Schedule Follow-Up Resurfacing Semantics — 2026-08-28
+
+### Status
+
+Accepted by FHO/OHO following Foundry review and read-only implementation inspection.
+
+This decision clarifies and supersedes any earlier interpretation that treated Follow-Up as a general pre-deadline check-in date.
+
+### Canonical meaning of Due Date
+
+Due Date / Deadline remains the authoritative date by which actionable work is expected to be completed.
+
+For Schedule and overdue semantics, an incomplete item becomes overdue after its Due Date has passed under the application's canonical business-date/timezone rules.
+
+The Due Date remains the source of overdue truth even when a Follow-Up Date exists.
+
+### Canonical meaning of Follow-Up Date
+
+Follow-Up Date is a post-deadline resurfacing instruction for incomplete work.
+
+Its purpose is to ensure that an item that was not completed by its Due Date is deliberately brought back to the operator's attention on a later date rather than falling through the cracks.
+
+Follow-Up does not replace or rewrite the original Due Date.
+
+A resurfaced item remains overdue because its original Due Date has passed.
+
+### Single active Due / Follow-Up Schedule position
+
+The Devoted HQ Schedule should not simultaneously display separate Due and Follow-Up occurrences for the same incomplete item.
+
+For the Due / Follow-Up relationship, an incomplete item has one effective Schedule position at a time:
+
+1. Before or on its Due Date, display it on the Due Date.
+2. After its Due Date, if no Follow-Up Date exists, leave it represented on its original Due Date as overdue.
+3. After its Due Date, if a Follow-Up Date exists, use the Follow-Up Date as its effective resurfacing position while preserving the original Due Date as the source of overdue truth.
+4. Completion prevents active Follow-Up resurfacing.
+5. Work Block / scheduled work is a separate semantic concept and is not redefined by this decision.
+
+This is projection behavior. It does not mutate the stored Due Date or Follow-Up Date when time passes.
+
+### Schedule presentation states
+
+The Schedule UI should clearly distinguish at least these three operator states:
+
+#### Upcoming
+
+Incomplete and the Due Date has not passed.
+
+Example:
+
+Irrigation Repair
+Due Sep 10
+
+#### Overdue without Follow-Up
+
+Incomplete, the Due Date has passed, and no Follow-Up Date is set.
+
+Example:
+
+🔴 Irrigation Repair
+OVERDUE · Due Sep 10
+
+#### Resurfaced overdue
+
+Incomplete, the Due Date has passed, and a Follow-Up Date exists.
+
+The item is presented at its effective Follow-Up Schedule position while remaining overdue from its original Due Date.
+
+Example:
+
+🔴 Irrigation Repair
+FOLLOW-UP · Overdue since Sep 10
+
+The UI must not rely on color alone to communicate these states. Textual and/or structural semantic indicators must remain available for accessibility and immediate comprehension.
+
+### Shared semantic rendering
+
+Month, Day, Week, selected-day agenda, and other Schedule presentations should derive their labels from shared Schedule semantics rather than independently recreating Due / Follow-Up logic in each renderer.
+
+### Calendar export boundary
+
+Operational Schedule resurfacing semantics must not silently redefine external calendar-export semantics.
+
+ICS / Add-to-Calendar behavior remains governed by the separately approved calendar-export contract in which Deadline is the canonical initial calendar-event date.
+
+The operational Schedule projection and external calendar-event projection may therefore require separate canonical helpers or adapters.
+
+### Validation
+
+This decision defines product meaning but does not yet authorize destructive normalization or silent mutation of existing records.
+
+Before enforcing creation/edit validation for Due Date and Follow-Up Date relationships, existing data must be inspected for compatibility and the Foundry must explicitly approve the validation behavior.
+
+### Foundry rationale
+
+The previous Schedule projected Due Date and Follow-Up Date independently, causing the same master item to appear twice.
+
+FHO/OHO clarified that Follow-Up was originally intended as a safety net after an incomplete item passes its deadline.
+
+The revised model preserves one master item, one authoritative deadline, one effective Due / Follow-Up Schedule position, and a visible explanation for why overdue work has resurfaced.
+
+### Supersession Note — Earlier Follow-Up Interpretation
+
+Earlier project-ledger analysis concluded that Follow-Up could generally function
+as a pre-deadline check-back date and therefore rejected a proposed
+`Follow-Up >= Deadline` constraint.
+
+That interpretation is retained in Git as part of the historical reasoning
+record, but it is now **SUPERSEDED** by the FHO/OHO clarification documented in
+`Schedule Follow-Up Resurfacing Semantics — 2026-08-28`.
+
+Current canonical product meaning is:
+
+- Due Date is the authoritative deadline.
+- Follow-Up is a post-deadline resurfacing instruction for incomplete work.
+- Follow-Up does not remove or cure overdue state.
+- Schedule should not simultaneously project separate Due and Follow-Up
+  occurrences for the same incomplete item.
+
+### Legacy Follow-Up Compatibility Rule
+
+Validation of stored Due Date and Follow-Up Date relationships is not yet
+authorized.
+
+Until validation is explicitly approved, operational Schedule projection must
+remain safe when encountering legacy or inconsistent records.
+
+If an incomplete item has both dates and:
+
+`Follow-Up Date <= Due Date`
+
+the Follow-Up Date must not be used as the post-deadline resurfacing position.
+
+For Schedule purposes, that record should behave as though no valid resurfacing
+date exists:
+
+- the original Due Date remains authoritative;
+- once that Due Date passes, the item remains represented as overdue against the
+  original Due Date;
+- stored production data is not silently modified.
+
+This compatibility rule protects Schedule behavior without rewriting historical
+data.

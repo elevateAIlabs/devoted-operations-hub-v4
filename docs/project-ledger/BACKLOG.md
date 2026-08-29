@@ -943,3 +943,125 @@ Displayed range and displayed work should update together.
 
 This finding strengthens the existing Schedule navigation backlog item and does
 not require a duplicate independent feature.
+
+## Schedule Semantic Clarity + Navigation — 4.2 Candidate
+
+### Status
+
+Foundry-scoped implementation candidate following OHO Field Report 002 and read-only Schedule inspection.
+
+### Schedule Due / Follow-Up projection
+
+Replace simultaneous Due + Follow-Up Schedule projection with conditional resurfacing semantics.
+
+Required behavior:
+
+- incomplete + Due Date not passed -> show at Due Date;
+- incomplete + Due Date passed + no Follow-Up -> remain represented against Due Date as overdue;
+- incomplete + Due Date passed + Follow-Up -> show at Follow-Up position and retain overdue truth from original Due Date;
+- completed items must not actively resurface because of Follow-Up;
+- Work Block remains independently modeled for this release;
+- do not mutate stored dates merely because the current date changes.
+
+### Schedule presentation
+
+Provide immediately understandable differentiation between:
+
+1. Upcoming
+2. Overdue without Follow-Up
+3. Resurfaced overdue with Follow-Up
+
+Preferred language includes:
+
+- `Due Sep 10`
+- `OVERDUE · Due Sep 10`
+- `FOLLOW-UP · Overdue since Sep 10`
+
+Do not rely on color alone.
+
+Use shared semantic state so Month, Day, Week, and agenda presentations do not develop conflicting rules.
+
+### Schedule navigation
+
+Make previous / next navigation aware of active visible range:
+
+- Day -> move one day;
+- Week -> move one week;
+- Month -> move one month;
+- 3 Months -> move three months.
+
+Keep selected date, visible range, month/year heading, and Today behavior synchronized under the canonical business timezone.
+
+### Calendar-export isolation
+
+Changing operational Schedule projection must not silently change the approved Deadline-centric ICS / Add-to-Calendar contract.
+
+Inspect/refactor the projection boundary as needed so operational resurfacing and external calendar-event generation can evolve independently.
+
+### Regression coverage
+
+Replace the existing contract that requires separate Due and Follow-Up projections with explicit time-dependent tests covering at minimum:
+
+- before Due Date;
+- on Due Date;
+- after Due Date with Follow-Up;
+- after Follow-Up while still incomplete;
+- overdue with no Follow-Up;
+- completed item with Follow-Up;
+- month/year boundary behavior;
+- Day / Week / Month / 3 Months navigation;
+- Today reset;
+- prevention of simultaneous Due + Follow-Up Schedule duplication.
+
+Prefer deterministic canonical functions that accept explicit date context rather than hiding system-clock dependence inside projection logic.
+
+### Related Operations terminology
+
+For the current Operations semantic-clarity pass:
+
+- `Operations Queue` -> `Needs Action`
+- `What is missing?` -> `Project Readiness`
+
+`Needs Action` is intentionally provisional and may receive a broader product-strategy review after additional OHO usage and cross-business applicability evidence.
+
+### Explicit non-goals
+
+Do not include in this release unless separately approved:
+
+- Work Block removal;
+- database schema changes;
+- automatic stored-date mutation;
+- scheduled midnight jobs;
+- speculative Project Readiness rules engine;
+- AI;
+- major Accounting redesign;
+- full Operations prioritization redesign.
+
+### Supersession of Earlier Follow-Up Backlog Disposition
+
+Earlier backlog text under `Follow-Up / Deadline Integrity - Disposition`
+described Follow-Up as an independent reminder date that could legitimately
+precede Deadline.
+
+That interpretation is preserved for historical traceability but is now
+**SUPERSEDED**.
+
+The current implementation direction is defined by
+`Schedule Semantic Clarity + Navigation — 4.2 Candidate` and the corresponding
+canonical decision record.
+
+### Legacy Date Compatibility
+
+Before create/edit validation is introduced, 4.2 Schedule projection must safely
+handle existing records where:
+
+`Follow-Up Date <= Due Date`
+
+Such a Follow-Up value should not move an overdue item backward in time.
+
+For operational projection, treat that value as unavailable for resurfacing and
+keep the incomplete item represented against its original Due Date as overdue.
+
+Add regression coverage for this case.
+
+Do not mutate the stored record merely to satisfy projection behavior.
