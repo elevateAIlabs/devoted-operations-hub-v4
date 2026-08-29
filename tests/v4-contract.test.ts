@@ -245,3 +245,15 @@ test("Schedule presentation preserves Work Block meaning when work and deadline 
   assert.match(source, /WORK · OVERDUE since/);
   assert.match(source, /event\.timeLabel \?\? "WORK"/);
 });
+
+test("Operations uses approved 4.2 semantic labels", async () => {
+  const source = await readFile(
+    new URL("../components/views.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /title="Needs Action"/);
+  assert.match(source, /title="Project Readiness"/);
+  assert.doesNotMatch(source, /title="Operations queue"/);
+  assert.doesNotMatch(source, /title="What is missing\?"/);
+});
