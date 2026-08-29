@@ -405,86 +405,496 @@ export function TasksView(props: ViewProps) {
 
 type CalendarMode = "Day" | "Week" | "Month" | "3 Months";
 
-function projectionLabel(event: ScheduleProjection) {
-  if (event.roles.length > 1) return event.roles.map((role) => role === "follow-up" ? "Follow-up" : role[0].toUpperCase() + role.slice(1)).join(" + ");
-  const role = event.roles[0];
-  return role === "work" && event.timeLabel ? event.timeLabel : role === "follow-up" ? "Follow-up" : "Due";
+type SchedulePresentation = {
+  tone: "upcoming" | "overdue" | "follow-up" | "work";
+  label: string;
+  detail: string | null;
+};
+
+function formatScheduleDate(value: string) {
+  return new Date(`${value}T12:00:00Z`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+function schedulePresentation(
+  event: ScheduleProjection,
+  today: string,
+): SchedulePresentation {
+  const item = event.item;
+  const hasWork = event.roles.includes("work");
+  const hasDue = event.roles.includes("due");
+  const hasFollowUp = event.roles.includes("follow-up");
+  const overdue = Boolean(item.dueDate && item.dueDate < today);
+
+  if (hasFollowUp && overdue && item.dueDate) {
+    return {
+      tone: "follow-up",
+      label: "FOLLOW-UP",
+      detail: `Overdue since ${formatScheduleDate(item.dueDate)}`,
+    };
+  }
+
+  if (hasWork && hasDue && overdue && item.dueDate) {
+    return {
+      tone: "overdue",
+      label: event.timeLabel ?? "WORK",
+      detail: `WORK · OVERDUE since ${formatScheduleDate(item.dueDate)}`,
+    };
+  }
+
+  if (hasWork && hasDue && item.dueDate) {
+    return {
+      tone: "work",
+      label: event.timeLabel ?? "WORK",
+      detail: `WORK · Due ${formatScheduleDate(item.dueDate)}`,
+    };
+  }
+
+  if (hasDue && overdue && item.dueDate) {
+    return {
+      tone: "overdue",
+      label: "OVERDUE",
+      detail: `Due ${formatScheduleDate(item.dueDate)}`,
+    };
+  }
+
+  if (hasDue && item.dueDate) {
+    return {
+      tone: "upcoming",
+      label: "DUE",
+      detail: `Due ${formatScheduleDate(item.dueDate)}`,
+    };
+  }
+
+  if (hasWork) {
+    return {
+      tone: "work",
+      label: event.timeLabel ?? "WORK",
+      detail: event.timeLabel ? "Work block" : null,
+    };
+  }
+
+  return {
+    tone: "upcoming",
+    label: "SCHEDULED",
+    detail: null,
+  };
+}
+
+function scheduleProjectionLabel(
+  event: ScheduleProjection,
+  today: string,
+) {
+  const presentation = schedulePresentation(event, today);
+  return presentation.detail
+    ? `${presentation.label} · ${presentation.detail}`
+    : presentation.label;
+}
+
+function calendarHeading(
+  mode: CalendarMode,
+  selectedDate: string,
+  year: number,
+  month: number,
+) {
+  if (mode === "Day") {
+    return new Date(`${selectedDate}T12:00:00Z`).toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "UTC",
+    });
+  }
+
+  if (mode === "Week") {
+    const end = plusDays(selectedDate, 6);
+    const startLabel = new Date(`${selectedDate}T12:00:00Z`).toLocaleDateString(
+      "en-US",
+      {
+        month: "short",
+        day: "numeric",
+        timeZone: "UTC",
+      },
+    );
+    const endLabel = new Date(`${end}T12:00:00Z`).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "UTC",
+    });
+    return `${startLabel} – ${endLabel}`;
+  }
+
+  if (mode === "3 Months") {
+    const end = new Date(Date.UTC(year, month + 2, 1));
+    return `${monthLabel(year, month)} – ${monthLabel(
+      end.getUTCFullYear(),
+      end.getUTCMonth(),
+    )}`;
+  }
+
+  return monthLabel(year, month);
 }
 
 export function ScheduleView(props: ViewProps) {
   const now = new Date();
-  const [year, setYear] = useState(Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", year: "numeric" }).format(now)));
-  const [month, setMonth] = useState(Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "numeric" }).format(now)) - 1);
+  const today = todayKey();
+
+  const [year, setYear] = useState(
+    Number(
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Chicago",
+        year: "numeric",
+      }).format(now),
+    ),
+  );
+
+  const [month, setMonth] = useState(
+    Number(
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Chicago",
+        month: "numeric",
+      }).format(now),
+    ) - 1,
+  );
+
   const [mode, setMode] = useState<CalendarMode>("Month");
-  const [selectedDate, setSelectedDate] = useState(todayKey());
-  const projections = useMemo(() => projectSchedule(actionable(props.items)), [props.items]);
+  const [selectedDate, setSelectedDate] = useState(today);
+
+  const projections = useMemo(
+    () => projectSchedule(actionable(props.items), today),
+    [props.items, today],
+  );
+
   const byDate = useMemo(() => {
     const map = new Map<string, ScheduleProjection[]>();
-    for (const event of projections) map.set(event.date, [...(map.get(event.date) ?? []), event]);
+
+    for (const event of projections) {
+      map.set(event.date, [...(map.get(event.date) ?? []), event]);
+    }
+
     return map;
   }, [projections]);
+
   const cells = calendarCells(year, month);
   const selectedAgenda = byDate.get(selectedDate) ?? [];
-  const moveMonth = (delta: number) => {
-    const date = new Date(Date.UTC(year, month + delta, 1));
+
+  const syncMonthToDate = (dateKey: string) => {
+    const date = new Date(`${dateKey}T12:00:00Z`);
     setYear(date.getUTCFullYear());
     setMonth(date.getUTCMonth());
   };
+
+  const moveVisibleRange = (direction: -1 | 1) => {
+    if (mode === "Day") {
+      const next = plusDays(selectedDate, direction);
+      setSelectedDate(next);
+      syncMonthToDate(next);
+      return;
+    }
+
+    if (mode === "Week") {
+      const next = plusDays(selectedDate, direction * 7);
+      setSelectedDate(next);
+      syncMonthToDate(next);
+      return;
+    }
+
+    const monthDelta = mode === "3 Months" ? direction * 3 : direction;
+    const nextMonth = new Date(Date.UTC(year, month + monthDelta, 1));
+    setYear(nextMonth.getUTCFullYear());
+    setMonth(nextMonth.getUTCMonth());
+
+    const currentDay = Number(selectedDate.slice(8, 10));
+    const lastDay = new Date(
+      Date.UTC(
+        nextMonth.getUTCFullYear(),
+        nextMonth.getUTCMonth() + 1,
+        0,
+      ),
+    ).getUTCDate();
+
+    const nextSelected = `${nextMonth.getUTCFullYear()}-${String(
+      nextMonth.getUTCMonth() + 1,
+    ).padStart(2, "0")}-${String(Math.min(currentDay, lastDay)).padStart(
+      2,
+      "0",
+    )}`;
+
+    setSelectedDate(nextSelected);
+  };
+
+  const resetToday = () => {
+    setSelectedDate(today);
+    syncMonthToDate(today);
+  };
+
+  const changeMode = (value: CalendarMode) => {
+    setMode(value);
+    syncMonthToDate(selectedDate);
+  };
+
+  const heading = calendarHeading(mode, selectedDate, year, month);
 
   return (
     <>
       <PageHeading
         eyebrow="Command calendar"
         title="Schedule"
-        description="See work blocks, deadlines, and follow-ups without duplicating the underlying item. Dates stay linked to one master record."
-        action={<button className="button primary" onClick={() => props.onQuickAdd("task")}>+ New task</button>}
+        description="See each commitment in its current operational position. Overdue work stays tied to its original deadline, while Follow-Up can deliberately resurface it later."
+        action={
+          <button
+            className="button primary"
+            onClick={() => props.onQuickAdd("task")}
+          >
+            + New task
+          </button>
+        }
       />
+
       <section className="panel calendar-panel">
         <div className="calendar-toolbar">
-          <div className="calendar-nav"><button onClick={() => moveMonth(-1)} aria-label="Previous month">←</button><button onClick={() => { const d = new Date(); setYear(d.getFullYear()); setMonth(d.getMonth()); setSelectedDate(todayKey()); }}>Today</button><button onClick={() => moveMonth(1)} aria-label="Next month">→</button><strong>{monthLabel(year, month)}</strong></div>
-          <div className="calendar-modes">{(["Day", "Week", "Month", "3 Months"] as CalendarMode[]).map((value) => <button key={value} className={mode === value ? "active" : ""} onClick={() => setMode(value)}>{value}</button>)}</div>
+          <div className="calendar-nav">
+            <button
+              onClick={() => moveVisibleRange(-1)}
+              aria-label={`Previous ${mode.toLowerCase()} range`}
+            >
+              ←
+            </button>
+
+            <button onClick={resetToday}>Today</button>
+
+            <button
+              onClick={() => moveVisibleRange(1)}
+              aria-label={`Next ${mode.toLowerCase()} range`}
+            >
+              →
+            </button>
+
+            <strong>{heading}</strong>
+          </div>
+
+          <div className="calendar-modes">
+            {(["Day", "Week", "Month", "3 Months"] as CalendarMode[]).map(
+              (value) => (
+                <button
+                  key={value}
+                  className={mode === value ? "active" : ""}
+                  onClick={() => changeMode(value)}
+                >
+                  {value}
+                </button>
+              ),
+            )}
+          </div>
         </div>
+
         {mode === "Month" ? (
           <>
-            <div className="weekday-grid">{["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => <span key={day}>{day}</span>)}</div>
+            <div className="weekday-grid">
+              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                <span key={day}>{day}</span>
+              ))}
+            </div>
+
             <div className="month-grid" data-calendar-month="true">
               {cells.map((cell) => {
                 const events = byDate.get(cell.key) ?? [];
                 const selected = cell.key === selectedDate;
-                const today = cell.key === todayKey();
+                const isToday = cell.key === today;
+
                 return (
-                  <button key={cell.key} className={`calendar-cell ${!cell.inMonth ? "adjacent" : ""} ${selected ? "selected" : ""} ${today ? "today" : ""}`} onClick={() => setSelectedDate(cell.key)}>
-                    <span className="date-number">{cell.day}</span><span className="add-date">+</span>
+                  <button
+                    key={cell.key}
+                    className={`calendar-cell ${
+                      !cell.inMonth ? "adjacent" : ""
+                    } ${selected ? "selected" : ""} ${
+                      isToday ? "today" : ""
+                    }`}
+                    onClick={() => setSelectedDate(cell.key)}
+                  >
+                    <span className="date-number">{cell.day}</span>
+                    <span className="add-date">+</span>
+
                     <div className="calendar-events">
-                      {events.slice(0, 3).map((event) => <span key={event.item.id}><b>{projectionLabel(event)}</b><em>{event.item.title}</em></span>)}
-                      {events.length > 3 ? <small>+{events.length - 3} more</small> : null}
+                      {events.slice(0, 3).map((event) => {
+                        const presentation = schedulePresentation(event, today);
+
+                        return (
+                          <span
+                            key={`${event.item.id}-${event.date}`}
+                            className={`schedule-state ${presentation.tone}`}
+                          >
+                            <b>{presentation.label}</b>
+                            <em>{event.item.title}</em>
+                            {presentation.detail ? (
+                              <small>{presentation.detail}</small>
+                            ) : null}
+                          </span>
+                        );
+                      })}
+
+                      {events.length > 3 ? (
+                        <small>+{events.length - 3} more</small>
+                      ) : null}
                     </div>
-                    <span className="mobile-event-count">{events.length ? events.length === 1 ? "•" : events.length : ""}</span>
+
+                    <span className="mobile-event-count">
+                      {events.length
+                        ? events.length === 1
+                          ? "•"
+                          : events.length
+                        : ""}
+                    </span>
                   </button>
                 );
               })}
             </div>
           </>
         ) : mode === "Day" ? (
-          <Agenda dates={[selectedDate]} byDate={byDate} onOpen={props.onOpen} />
+          <Agenda
+            dates={[selectedDate]}
+            byDate={byDate}
+            onOpen={props.onOpen}
+            today={today}
+          />
         ) : mode === "Week" ? (
-          <Agenda dates={Array.from({ length: 7 }, (_, index) => plusDays(selectedDate, index))} byDate={byDate} onOpen={props.onOpen} />
+          <Agenda
+            dates={Array.from({ length: 7 }, (_, index) =>
+              plusDays(selectedDate, index),
+            )}
+            byDate={byDate}
+            onOpen={props.onOpen}
+            today={today}
+          />
         ) : (
-          <div className="quarter-grid">{[0, 1, 2].map((offset) => { const d = new Date(Date.UTC(year, month + offset, 1)); const mini = calendarCells(d.getUTCFullYear(), d.getUTCMonth()); return <div className="mini-month" key={offset}><strong>{monthLabel(d.getUTCFullYear(), d.getUTCMonth())}</strong><div>{mini.map((cell) => <button key={cell.key} className={`${!cell.inMonth ? "adjacent" : ""} ${(byDate.get(cell.key)?.length ?? 0) ? "has-event" : ""}`} onClick={() => { setSelectedDate(cell.key); setYear(d.getUTCFullYear()); setMonth(d.getUTCMonth()); setMode("Month"); }}>{cell.day}</button>)}</div></div>; })}</div>
+          <div className="quarter-grid">
+            {[0, 1, 2].map((offset) => {
+              const d = new Date(Date.UTC(year, month + offset, 1));
+              const mini = calendarCells(
+                d.getUTCFullYear(),
+                d.getUTCMonth(),
+              );
+
+              return (
+                <div className="mini-month" key={offset}>
+                  <strong>
+                    {monthLabel(d.getUTCFullYear(), d.getUTCMonth())}
+                  </strong>
+
+                  <div>
+                    {mini.map((cell) => (
+                      <button
+                        key={cell.key}
+                        className={`${!cell.inMonth ? "adjacent" : ""} ${
+                          (byDate.get(cell.key)?.length ?? 0)
+                            ? "has-event"
+                            : ""
+                        }`}
+                        onClick={() => {
+                          setSelectedDate(cell.key);
+                          setYear(d.getUTCFullYear());
+                          setMonth(d.getUTCMonth());
+                          setMode("Month");
+                        }}
+                      >
+                        {cell.day}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </section>
+
       {mode === "Month" ? (
         <section className="panel selected-agenda">
-          <SectionHeading eyebrow="Selected day" title={new Date(`${selectedDate}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" })} />
-          {selectedAgenda.length ? selectedAgenda.map((event) => <RecordRow key={event.item.id} item={event.item} onOpen={props.onOpen} reason={`${projectionLabel(event)} · one master item`} />) : <EmptyState title="Nothing scheduled" text="Choose another day or add a date to an item." />}
+          <SectionHeading
+            eyebrow="Selected day"
+            title={new Date(
+              `${selectedDate}T12:00:00Z`,
+            ).toLocaleDateString("en-US", {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+              timeZone: "UTC",
+            })}
+          />
+
+          {selectedAgenda.length ? (
+            selectedAgenda.map((event) => (
+              <RecordRow
+                key={`${event.item.id}-${event.date}`}
+                item={event.item}
+                onOpen={props.onOpen}
+                reason={scheduleProjectionLabel(event, today)}
+              />
+            ))
+          ) : (
+            <EmptyState
+              title="Nothing scheduled"
+              text="Choose another day or add a date to an item."
+            />
+          )}
         </section>
       ) : null}
     </>
   );
 }
 
-function Agenda({ dates, byDate, onOpen }: { dates: string[]; byDate: Map<string, ScheduleProjection[]>; onOpen: (item: WorkItem) => void }) {
-  return <div className="agenda-grid">{dates.map((date) => <section key={date}><h3>{new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" })}</h3>{(byDate.get(date) ?? []).map((event) => <button key={event.item.id} onClick={() => onOpen(event.item)}><StatusPill value={projectionLabel(event)} /><strong>{event.item.title}</strong><small>{event.timeLabel ?? event.item.status}</small></button>)}</section>)}</div>;
+function Agenda({
+  dates,
+  byDate,
+  onOpen,
+  today,
+}: {
+  dates: string[];
+  byDate: Map<string, ScheduleProjection[]>;
+  onOpen: (item: WorkItem) => void;
+  today: string;
+}) {
+  return (
+    <div className="agenda-grid">
+      {dates.map((date) => (
+        <section key={date}>
+          <h3>
+            {new Date(`${date}T12:00:00Z`).toLocaleDateString("en-US", {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+              timeZone: "UTC",
+            })}
+          </h3>
+
+          {(byDate.get(date) ?? []).map((event) => {
+            const presentation = schedulePresentation(event, today);
+
+            return (
+              <button
+                key={`${event.item.id}-${event.date}`}
+                className={`agenda-event schedule-state ${presentation.tone}`}
+                onClick={() => onOpen(event.item)}
+              >
+                <StatusPill value={presentation.label} />
+                <strong>{event.item.title}</strong>
+                <small>
+                  {presentation.detail ??
+                    event.timeLabel ??
+                    event.item.status}
+                </small>
+              </button>
+            );
+          })}
+        </section>
+      ))}
+    </div>
+  );
 }
 
 export function OperationsView(props: ViewProps) {

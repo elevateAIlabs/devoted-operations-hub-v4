@@ -206,3 +206,42 @@ test("a three-item content packet exports as a readable PDF", async () => {
   assert.ok(parsed.getPageCount() >= 1);
   assert.ok(bytes.length > 2_000);
 });
+
+test("Schedule source contains semantic overdue and follow-up presentation states", async () => {
+  const source = await readFile(
+    new URL("../components/views.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /FOLLOW-UP/);
+  assert.match(source, /Overdue since/);
+  assert.match(source, /OVERDUE/);
+  assert.match(source, /Due \$\{formatScheduleDate/);
+  assert.match(source, /schedulePresentation/);
+});
+
+test("Schedule navigation advances according to active visible range", async () => {
+  const source = await readFile(
+    new URL("../components/views.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /mode === "Day"/);
+  assert.match(source, /plusDays\(selectedDate, direction\)/);
+  assert.match(source, /mode === "Week"/);
+  assert.match(source, /direction \* 7/);
+  assert.match(source, /mode === "3 Months" \? direction \* 3 : direction/);
+  assert.match(source, /resetToday/);
+});
+
+test("Schedule presentation preserves Work Block meaning when work and deadline share a date", async () => {
+  const source = await readFile(
+    new URL("../components/views.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /hasWork && hasDue/);
+  assert.match(source, /WORK · Due/);
+  assert.match(source, /WORK · OVERDUE since/);
+  assert.match(source, /event\.timeLabel \?\? "WORK"/);
+});

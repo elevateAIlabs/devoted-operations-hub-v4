@@ -670,3 +670,51 @@ kbd { padding: 2px 6px; border: 1px solid #deddd8; border-radius: 4px; backgroun
     justify-content: start;
   }
 }
+
+/* Devoted HQ 4.2 - Schedule semantic states */
+
+.calendar-events > span.schedule-state {
+  position: relative;
+}
+
+.calendar-events > span.schedule-state.overdue,
+.calendar-events > span.schedule-state.follow-up {
+  border-left-width: 4px;
+  border-left-color: #b42318;
+}
+
+.calendar-events > span.schedule-state.overdue b,
+.calendar-events > span.schedule-state.follow-up b,
+.calendar-events > span.schedule-state.overdue small,
+.calendar-events > span.schedule-state.follow-up small {
+  color: #9b1c12;
+}
+
+.calendar-events > span.schedule-state.follow-up {
+  background: #fff8f6;
+}
+
+.calendar-events > span.schedule-state.upcoming {
+  border-left-color: var(--orange);
+}
+
+.calendar-events > span.schedule-state.work {
+  border-left-color: #555;
+}
+
+.agenda-event.schedule-state.overdue,
+.agenda-event.schedule-state.follow-up {
+  border-left: 4px solid #b42318;
+}
+
+.agenda-event.schedule-state.follow-up {
+  background: #fff8f6;
+}
+
+.agenda-event.schedule-state.upcoming {
+  border-left: 4px solid var(--orange);
+}
+
+.agenda-event.schedule-state.work {
+  border-left: 4px solid #555;
+}
