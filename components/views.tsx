@@ -725,7 +725,7 @@ export function ScheduleView(props: ViewProps) {
                     <span className="add-date">+</span>
 
                     <div className="calendar-events">
-                      {events.slice(0, 3).map((event) => {
+                      {events.slice(0, 2).map((event) => {
                         const presentation = schedulePresentation(event, today);
 
                         return (
@@ -742,8 +742,10 @@ export function ScheduleView(props: ViewProps) {
                         );
                       })}
 
-                      {events.length > 3 ? (
-                        <small>+{events.length - 3} more</small>
+                      {events.length > 2 ? (
+                        <small className="calendar-more">
+                          +{events.length - 2} more
+                        </small>
                       ) : null}
                     </div>
 

@@ -285,3 +285,26 @@ test("Schedule Week view renders the calendar week containing selectedDate", asy
     /plusDays\(selectedDate, index\)/,
   );
 });
+
+test("Schedule Month view limits cell previews to two complete events", async () => {
+  const source = await readFile(
+    new URL("../components/views.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /events\.slice\(0, 2\)/);
+  assert.match(source, /events\.length > 2/);
+  assert.match(source, /\+\{events\.length - 2\} more/);
+  assert.doesNotMatch(source, /events\.slice\(0, 3\)/);
+});
+
+test("Schedule agenda titles use defensive text containment", async () => {
+  const css = await readFile(
+    new URL("../app/globals.css", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(css, /\.agenda-event\s*>\s*strong/);
+  assert.match(css, /overflow-wrap:\s*anywhere/);
+  assert.match(css, /\.agenda-event\s*\{[\s\S]*?min-width:\s*0/);
+});

@@ -718,3 +718,36 @@ kbd { padding: 2px 6px; border: 1px solid #deddd8; border-radius: 4px; backgroun
 .agenda-event.schedule-state.work {
   border-left: 4px solid #555;
 }
+
+/* Devoted HQ 4.2A6 - Schedule density and text containment */
+
+.calendar-more {
+  min-width: 0;
+  padding: 2px 3px;
+  overflow: hidden;
+  color: #686762;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 7px;
+  font-weight: 900;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agenda-event {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.agenda-event > strong {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.agenda-event > small {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
