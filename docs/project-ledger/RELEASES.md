@@ -186,3 +186,43 @@ See:
 `LOCAL-QA-DATA.md`
 
 No Cloudflare deployment has occurred for 4.2 at the time of this entry.
+
+
+### 4.2A5 Local QA Refresh Tool — Implementation
+
+Status:
+
+**IMPLEMENTED / VALIDATED / NOT YET APPLIED TO ACTIVE LOCALHOST**
+
+4.2A5 introduced a local-only QA snapshot refresh utility:
+
+`scripts/refresh-local-qa.py`
+
+Package command:
+
+`npm run qa:refresh`
+
+The utility:
+
+- defaults to dry-run mode
+- accepts an explicitly selected full JSON backup
+- supports SHA-256 verification
+- targets only project-local Miniflare SQLite state
+- refuses explicit SQLite targets outside the approved local D1 directory
+- creates an automatic rollback snapshot before apply
+- refreshes records, actions, preferences, migration metadata, and attachment metadata
+- imports attachments as locally unavailable metadata
+- strips production R2 storage keys from local attachment records
+- records refresh provenance in local activity history
+- does not invoke Wrangler
+- does not mutate remote D1
+- does not mutate remote R2
+
+A disposable apply rehearsal successfully transformed a cloned local database
+from 70 / 9 / 6 records-actions-attachments to 105 / 44 / 16 while preserving
+relational integrity.
+
+The active localhost database was not changed during the rehearsal.
+
+The real localhost refresh remains separately gated after the tool is committed,
+merged, and pushed.

@@ -49,3 +49,7 @@ next-env.d.ts
 
 # Devoted HQ local QA runtime snapshots
 .local-qa-snapshots/
+
+# Python tooling runtime artifacts
+__pycache__/
+*.py[cod]

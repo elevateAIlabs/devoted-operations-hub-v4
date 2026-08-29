@@ -481,3 +481,123 @@ Remaining implementation:
 
 The August 29 full JSON snapshot remains external to Git while the refresh
 mechanism is being designed.
+
+
+---
+
+## Implemented Local QA Refresh Tool
+
+4.2A5 includes an explicit local-only QA refresh utility:
+
+`npm run qa:refresh`
+
+Implementation:
+
+`scripts/refresh-local-qa.py`
+
+The utility accepts an explicitly selected Devoted HQ full JSON backup and
+targets only a project-local Miniflare SQLite database under:
+
+`.wrangler/state/v3/d1/miniflare-D1DatabaseObject/`
+
+The utility does not invoke Wrangler and provides no remote D1 or R2 mutation
+path.
+
+### Default Behavior: Dry Run
+
+Dry run is the default behavior.
+
+Example:
+
+    npm run qa:refresh -- \
+      "/path/to/devoted-hq-full-backup.json" \
+      --expected-sha256 "<audited-sha256>"
+
+Dry run:
+
+- validates the JSON structure
+- validates IDs and parent relationships
+- verifies the selected SHA-256 when supplied
+- identifies the project-local Miniflare D1
+- reports current and source counts
+- does not mutate local D1
+
+### Apply Behavior
+
+Mutation requires the explicit `--apply` flag.
+
+For apply operations:
+
+- `--expected-sha256` is mandatory
+- the selected SQLite target must reside inside the project-local Miniflare D1 directory
+- a pre-refresh SQLite backup is automatically created under `.local-qa-snapshots/`
+- records, actions, preferences, migration metadata, and attachment metadata are replaced from the approved snapshot
+- a local QA provenance activity event is created
+
+### Attachment Safety
+
+The initial refresh mode is metadata-only.
+
+Imported attachment metadata is intentionally rewritten locally so that:
+
+- `available = false`
+- `storage_key = NULL`
+
+This prevents production R2 storage references from being mistaken for local
+binary availability.
+
+Local R2 is not modified.
+
+### Proven Safety Rehearsal
+
+Before use against the active localhost D1, 4.2A5 performed an apply rehearsal
+against a disposable clone of the historical local database.
+
+The clone successfully changed from:
+
+- 70 records
+- 9 actions
+- 6 attachments
+
+to:
+
+- 105 records
+- 44 actions
+- 16 attachments
+
+Validation confirmed:
+
+- zero orphan actions
+- zero orphan attachment records
+- zero orphan attachment actions
+- all imported attachments unavailable locally
+- zero production storage keys retained
+- one refresh provenance event created
+- automatic pre-refresh rollback snapshot created
+- real active localhost D1 remained bit-for-bit unchanged
+- frozen August 5 regression fixture remained unchanged
+
+The disposable rehearsal database was deleted after validation.
+
+### Runtime Artifacts
+
+The following remain local runtime state and must not be committed:
+
+- `.local-qa-snapshots/`
+- Python `__pycache__/`
+- Python bytecode files
+
+These are excluded through `.gitignore`.
+
+### Governing Principle
+
+Local QA refresh is a deliberate data operation distinct from:
+
+- Git changes
+- application deployment
+- production D1 mutation
+- production R2 mutation
+- schema migration
+
+A refresh must never be treated as an incidental side effect of starting
+localhost.

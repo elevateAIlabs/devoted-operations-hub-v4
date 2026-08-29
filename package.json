@@ -16,7 +16,8 @@
     "test:core": "node --test tests/core.test.mjs",
     "validate:artifact": "bash scripts/validate-artifact.sh",
     "lint": "bash scripts/sites-env.sh -- eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "bash scripts/sites-env.sh -- drizzle-kit generate"
+    "db:generate": "bash scripts/sites-env.sh -- drizzle-kit generate",
+    "qa:refresh": "python3 scripts/refresh-local-qa.py"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.2",
