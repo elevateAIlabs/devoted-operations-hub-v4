@@ -751,3 +751,30 @@ kbd { padding: 2px 6px; border: 1px solid #deddd8; border-radius: 4px; backgroun
   max-width: 100%;
   overflow-wrap: anywhere;
 }
+
+/* Devoted HQ 4.2A7 - Weekly Agenda */
+
+.weekly-agenda {
+  display: grid;
+  gap: 0;
+}
+
+.weekly-agenda-section {
+  min-width: 0;
+  padding-top: 14px;
+}
+
+.weekly-agenda-section + .weekly-agenda-section {
+  margin-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.weekly-agenda-section > h3 {
+  margin: 0 0 4px;
+  color: #686762;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}

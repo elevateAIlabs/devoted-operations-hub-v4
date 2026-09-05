@@ -308,3 +308,46 @@ test("Schedule agenda titles use defensive text containment", async () => {
   assert.match(css, /overflow-wrap:\s*anywhere/);
   assert.match(css, /\.agenda-event\s*\{[\s\S]*?min-width:\s*0/);
 });
+
+test("Schedule Week view exposes a Weekly Agenda for the visible week", async () => {
+  const source = await readFile(
+    new URL("../components/views.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /const selectedWeekDates = Array\.from/);
+  assert.match(source, /plusDays\(selectedWeek\.start, index\)/);
+  assert.match(source, /const weeklyAgenda = selectedWeekDates/);
+  assert.match(source, /title="Weekly Agenda"/);
+  assert.match(source, /className="weekly-agenda-section"/);
+  assert.match(source, /weeklyAgenda\.map/);
+});
+
+test("Weekly Agenda uses Record Rows and preserves the existing Item Drawer interaction", async () => {
+  const source = await readFile(
+    new URL("../components/views.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    source,
+    /weeklyAgenda\.map\([\s\S]*?<RecordRow[\s\S]*?onOpen=\{props\.onOpen\}/,
+  );
+  assert.match(
+    source,
+    /reason=\{scheduleProjectionLabel\(event, today\)\}/,
+  );
+});
+
+test("Month Selected Day Agenda remains independently available", async () => {
+  const source = await readFile(
+    new URL("../components/views.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /mode === "Month"/);
+  assert.match(source, /eyebrow="Selected day"/);
+  assert.match(source, /selectedAgenda\.map/);
+  assert.match(source, /mode === "Week"/);
+  assert.match(source, /title="Weekly Agenda"/);
+});

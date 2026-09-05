@@ -586,6 +586,15 @@ export function ScheduleView(props: ViewProps) {
   const cells = calendarCells(year, month);
   const selectedAgenda = byDate.get(selectedDate) ?? [];
   const selectedWeek = calendarWeekBounds(selectedDate);
+  const selectedWeekDates = Array.from({ length: 7 }, (_, index) =>
+    plusDays(selectedWeek.start, index),
+  );
+  const weeklyAgenda = selectedWeekDates
+    .map((date) => ({
+      date,
+      events: byDate.get(date) ?? [],
+    }))
+    .filter((section) => section.events.length > 0);
 
   const syncMonthToDate = (dateKey: string) => {
     const date = new Date(`${dateKey}T12:00:00Z`);
@@ -770,9 +779,7 @@ export function ScheduleView(props: ViewProps) {
           />
         ) : mode === "Week" ? (
           <Agenda
-            dates={Array.from({ length: 7 }, (_, index) =>
-              plusDays(selectedWeek.start, index),
-            )}
+            dates={selectedWeekDates}
             byDate={byDate}
             onOpen={props.onOpen}
             today={today}
@@ -846,6 +853,47 @@ export function ScheduleView(props: ViewProps) {
             <EmptyState
               title="Nothing scheduled"
               text="Choose another day or add a date to an item."
+            />
+          )}
+        </section>
+      ) : null}
+
+
+      {mode === "Week" ? (
+        <section className="panel selected-agenda weekly-agenda">
+          <SectionHeading
+            eyebrow="Visible week"
+            title="Weekly Agenda"
+          />
+
+          {weeklyAgenda.length ? (
+            weeklyAgenda.map((section) => (
+              <div className="weekly-agenda-section" key={section.date}>
+                <h3>
+                  {new Date(
+                    `${section.date}T12:00:00Z`,
+                  ).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                    timeZone: "UTC",
+                  })}
+                </h3>
+
+                {section.events.map((event) => (
+                  <RecordRow
+                    key={`${event.item.id}-${event.date}`}
+                    item={event.item}
+                    onOpen={props.onOpen}
+                    reason={scheduleProjectionLabel(event, today)}
+                  />
+                ))}
+              </div>
+            ))
+          ) : (
+            <EmptyState
+              title="Nothing scheduled this week"
+              text="Move to another week or add a date to an item."
             />
           )}
         </section>

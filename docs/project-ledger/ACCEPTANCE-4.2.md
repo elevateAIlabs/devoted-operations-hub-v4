@@ -494,3 +494,75 @@ parenthetical explanation when first introduced during OHO / Foundry discussion.
 
 This terminology requirement changes communication only. It does not alter
 Schedule behavior or implementation semantics.
+
+
+---
+
+## 4.2A7 — Weekly Agenda OHO Acceptance
+
+**Status:** OHO VISUAL ACCEPTANCE PASSED
+
+**Date:** 2026-09-05
+
+OHO performed localhost visual acceptance of the 4.2A7 Weekly Agenda
+implementation against the realistic August 29 QA dataset.
+
+Canonical terminology applies.
+
+### Accepted Behavior
+
+The **Week Calendar** *(Sunday-through-Saturday calendar area)* remains visible
+and continues to display its existing **Schedule Cards**
+*(task boxes inside the calendar)*.
+
+A **Weekly Agenda** *(full task list for the visible week)* now appears below
+the Week Calendar.
+
+The Weekly Agenda:
+
+- represents the complete canonical Schedule workload for the visible week;
+- follows the same Sunday-through-Saturday range displayed by Week View;
+- groups work into **Agenda Sections** *(one date grouping inside the Agenda)*;
+- displays individual work items as **Record Rows**
+  *(individual items in the list)*;
+- opens the existing **Item Drawer**
+  *(right-side full item details panel)* when a Record Row is selected.
+
+OHO specifically confirmed that:
+
+1. the Weekly Agenda appears below Week View as expected; and
+2. selecting a Record Row from the Weekly Agenda opens the Item Drawer as
+   expected.
+
+### Preserved Behavior
+
+4.2A7 does not change:
+
+- Schedule projection semantics;
+- Due Date meaning;
+- Follow-Up meaning;
+- Work Block meaning;
+- Sunday-through-Saturday Week boundaries;
+- Month View;
+- the **Selected Day Agenda** *(task list for one selected date)*;
+- D1;
+- R2;
+- database schema;
+- ICS / calendar-export behavior.
+
+### Separate Finding
+
+The previously observed intermittent Schedule View reset from Week View back to
+Month View remains a separate investigation.
+
+That behavior was deliberately excluded from 4.2A7 scope.
+
+### Disposition
+
+**A7 implementation:** ACCEPTED
+
+**Release blocker introduced by A7:** None observed
+
+**Cloudflare deployment authorized by this acceptance alone:** No
+
+The integrated 4.2 localhost release-candidate acceptance remains in progress.

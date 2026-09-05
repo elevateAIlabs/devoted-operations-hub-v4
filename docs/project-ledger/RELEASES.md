@@ -267,3 +267,42 @@ next deployment gate.
 See:
 
 `ACCEPTANCE-4.2.md`
+
+
+### 4.2A7 — Weekly Agenda
+
+Status:
+
+**IMPLEMENTED / OHO VISUALLY ACCEPTED / PENDING CANONICAL COMMIT**
+
+4.2 localhost release-candidate testing identified that Week View displayed
+the seven-day calendar workload but did not provide the list-oriented weekly
+workload OHO expected below it.
+
+A7 adds a **Weekly Agenda** *(full task list for the visible week)* below the
+existing Week Calendar.
+
+The implementation:
+
+- preserves the existing Sunday-through-Saturday Week Calendar;
+- preserves existing Schedule Cards;
+- derives the Weekly Agenda from the same visible-week date range;
+- uses the same canonical Schedule projections as the Week Calendar;
+- groups workload into date-based Agenda Sections;
+- represents items with Record Rows;
+- preserves the existing Item Drawer interaction;
+- leaves Month Selected Day Agenda behavior unchanged.
+
+OHO localhost visual acceptance passed on 2026-09-05.
+
+OHO confirmed:
+
+- the Weekly Agenda appears below Week View as expected;
+- selecting a Record Row opens the Item Drawer as expected.
+
+Automated contract coverage accompanies the implementation.
+
+The intermittent Week-to-Month Schedule reset remains a separately scoped
+release-candidate investigation and is not part of A7.
+
+No D1, R2, schema, or external calendar-export behavior changed.
