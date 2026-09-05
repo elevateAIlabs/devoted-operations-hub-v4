@@ -663,3 +663,32 @@ attachment mirroring remain separately gated operations.
 See:
 
 `LOCAL-QA-DATA.md`
+
+
+## Canonical UI/UX Terminology
+
+**Decision:** Adopt `UI-UX-TERMINOLOGY.md` as the canonical human-facing
+vocabulary for Devoted HQ interface discussions and documentation.
+
+The terminology applies to:
+
+- FHO and OHO product discussions
+- Foundry reviews
+- SK implementation instructions
+- acceptance testing
+- field reports
+- backlog entries
+- release documentation
+
+Until further notice, nuanced or less-obvious canonical terms should include a
+brief plain-English explanation in parentheses when first introduced in a
+discussion or instruction.
+
+Internal code identifiers do not need to be renamed merely to match product
+terminology.
+
+**Rationale:** A shared product vocabulary reduces ambiguity between interface
+containers, calendar representations, list representations, and item-detail
+interactions while helping OHO build familiarity with the product language.
+
+**Canonical reference:** `docs/project-ledger/UI-UX-TERMINOLOGY.md`

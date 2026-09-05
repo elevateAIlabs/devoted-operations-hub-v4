@@ -468,3 +468,29 @@ Cloudflare deployment remains prohibited until:
 4. canonical Git main remains clean and synchronized.
 5. final automated validation passes.
 6. production D1/R2 preservation is reconfirmed.
+
+
+---
+
+## Canonical UI/UX Language
+
+4.2 acceptance observations should use the terminology defined in:
+
+`docs/project-ledger/UI-UX-TERMINOLOGY.md`
+
+Examples include:
+
+- Schedule Card
+- Calendar Cell
+- Overflow Count
+- Selected Day Agenda
+- Weekly Agenda
+- Agenda Section
+- Record Row
+- Item Drawer
+
+Until further notice, nuanced terms should include a brief plain-English
+parenthetical explanation when first introduced during OHO / Foundry discussion.
+
+This terminology requirement changes communication only. It does not alter
+Schedule behavior or implementation semantics.
