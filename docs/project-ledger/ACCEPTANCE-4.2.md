@@ -641,3 +641,156 @@ use while all of the following are true:
 
 If reproduced under those conditions, capture the immediately preceding user
 interaction and treat it as new release-candidate evidence.
+
+
+---
+
+## 4.2 Cross-View Operational Consistency Acceptance
+
+**Status:** OHO VISUAL ACCEPTANCE PASSED
+
+**Date:** 2026-09-05
+
+OHO performed an integrated localhost acceptance pass across the core
+operational surfaces using the refreshed local QA dataset.
+
+The confirmed local QA universe remained:
+
+- 105 source records;
+- 44 primary actions;
+- 16 attachment metadata rows.
+
+The acceptance pass focused on consistency between the **Tasks Tab**, the
+**Schedule View** *(main Schedule screen)*, the **Week Calendar**, the
+**Weekly Agenda** *(full task list for the visible week)*, **Record Rows**
+*(individual items in a list)*, and the **Item Drawer**
+*(right-side full item details panel)*.
+
+### Follow-Up Resurfacing
+
+The record:
+
+`Create & Update Pending Email Templates in HomeWorks`
+
+had the following underlying operational data:
+
+- Deadline: 2026-09-01;
+- Follow-Up: 2026-09-05;
+- incomplete status.
+
+OHO visually confirmed:
+
+- the Week Calendar displays the item on September 5;
+- its **Schedule Card** *(task box inside the calendar)* is identified as
+  FOLLOW-UP;
+- the Schedule Card communicates `Overdue since Sep 1`;
+- the Weekly Agenda places the corresponding Record Row under Saturday,
+  September 5;
+- the Weekly Agenda communicates `FOLLOW-UP · Overdue since Sep 1`;
+- selecting the Record Row opens the existing Item Drawer;
+- the Item Drawer preserves Deadline `2026-09-01`;
+- the Item Drawer preserves Follow-Up `2026-09-05`;
+- the same item remains present in the Tasks Tab under the Overdue filter.
+
+This confirms the intended 4.2 semantic contract:
+
+**Follow-Up changes where incomplete work operationally resurfaces without
+rewriting its authoritative Deadline or removing its overdue status.**
+
+### Plain Overdue Control
+
+The record:
+
+`Find Comparable 16' Landscape Trailer In Immediate Area`
+
+had:
+
+- Deadline: 2026-09-03;
+- no Follow-Up;
+- incomplete status.
+
+OHO visually confirmed that it remains positioned on September 3 and is
+presented as OVERDUE rather than FOLLOW-UP.
+
+### Single-Position Follow-Up Control
+
+The record:
+
+`INVOICE ALL SEPT RECURRING CLIENTS`
+
+had:
+
+- Deadline: 2026-09-01;
+- Follow-Up: 2026-09-02;
+- incomplete status.
+
+OHO visually confirmed:
+
+- the item operationally appears on September 2 as FOLLOW-UP;
+- it communicates `Overdue since Sep 1`;
+- no second independent Due representation was observed on September 1.
+
+This confirms the intended single-position operational projection and guards
+against simultaneous Due and Follow-Up duplication.
+
+### Completed-Work Control
+
+The completed record:
+
+`Prepare & Submit 2025 Tax P&L Packet to CPA`
+
+contained historical Deadline and Follow-Up data.
+
+OHO confirmed that the completed item did not actively project into the Week
+Calendar or Weekly Agenda merely because those historical dates remained on
+the record.
+
+### Week Calendar and Weekly Agenda Consistency
+
+For the tested visible week, OHO visually confirmed that the Schedule Cards
+displayed in the Week Calendar were represented by corresponding Record Rows
+in the Weekly Agenda on the same operational dates.
+
+No obvious:
+
+- orphaned Schedule Card;
+- duplicate operational projection;
+- date disagreement;
+- Follow-Up / Deadline contradiction;
+- completed-item resurfacing
+
+was observed during this acceptance pass.
+
+### Item Drawer Consistency
+
+The Item Drawer opened successfully from the Weekly Agenda and preserved the
+canonical record data used to derive the Schedule presentation.
+
+The tested long-content Item Drawer also remained usable through its Overview,
+Attachments, and item-level export areas.
+
+### Tasks and Schedule Consistency
+
+OHO confirmed that a record operationally resurfaced on its Follow-Up date in
+Schedule can simultaneously remain in the Tasks Overdue filter when its
+authoritative Deadline has passed.
+
+This is intentional behavior and represents two compatible operational
+questions:
+
+- Schedule: where should the incomplete work resurface now?
+- Tasks / Overdue: has the authoritative Deadline been missed?
+
+### Disposition
+
+**Core Tasks / Schedule / Weekly Agenda / Item Drawer cross-view consistency:**
+PASSED
+
+**Release blocker identified by this acceptance pass:** None
+
+**Application-code change required:** No
+
+**Cloudflare deployment authorized by this acceptance alone:** No
+
+The integrated 4.2 localhost release-candidate acceptance should continue into
+the remaining product surfaces before the final Foundry deployment gate.
