@@ -566,3 +566,78 @@ That behavior was deliberately excluded from 4.2A7 scope.
 **Cloudflare deployment authorized by this acceptance alone:** No
 
 The integrated 4.2 localhost release-candidate acceptance remains in progress.
+
+
+---
+
+## Schedule View Reset Investigation
+
+**Status:** MONITOR / NOT CURRENTLY REPRODUCIBLE / NON-BLOCKING
+
+**Date:** 2026-09-05
+
+During the beginning of the 4.2 localhost acceptance session, OHO observed the
+**Schedule View** *(main Schedule screen)* apparently returning from Week View
+to Month View approximately two times without intentionally selecting Month
+View.
+
+OHO subsequently attempted to reproduce the behavior through normal and
+aggressive interface interaction but could not reproduce it again.
+
+A narrow read-only source inspection was performed after 4.2A7 became
+canonical.
+
+### Read-Only Findings
+
+The inspection found:
+
+- Schedule mode is local React state;
+- Schedule mode initializes to Month when ScheduleView mounts;
+- the **View Selector** *(Day / Week / Month / 3 Months controls)* is the normal
+  path for changing Schedule mode;
+- only one explicit non-selector `setMode("Month")` exists;
+- that explicit Month transition belongs to the intentional 3 Months Calendar
+  interaction when selecting a mini-calendar date;
+- no Schedule-specific effect forces Month View;
+- no timer, router refresh, reload handler, or data-refresh callback was found
+  directly changing Schedule mode;
+- no suspicious React key was found forcing ScheduleView to remount.
+
+### Important Behavior
+
+Because Schedule mode currently initializes as Month when ScheduleView mounts,
+a genuine component remount will return the Schedule interface to Month View.
+
+This means a reset to Month can legitimately occur after conditions such as:
+
+- a true browser reload;
+- leaving Schedule and later remounting Schedule;
+- development-time component remount behavior such as localhost Fast Refresh.
+
+Schedule mode persistence across full remounts or browser reloads is not
+currently a 4.2 product requirement.
+
+### Current Disposition
+
+No unintended Schedule-mode mutation path was identified.
+
+The behavior is therefore classified:
+
+**MONITOR / NOT CURRENTLY REPRODUCIBLE / NOT A RELEASE BLOCKER**
+
+No application-code change is authorized from this finding alone.
+
+### Reopen Condition
+
+Reopen this investigation if OHO reproduces the reset during stable localhost
+use while all of the following are true:
+
+- OHO remains on the Schedule Tab;
+- no browser refresh occurs;
+- SK is not modifying source code;
+- localhost Fast Refresh is not occurring;
+- OHO did not select Month through the View Selector;
+- OHO did not select a date from the 3 Months Calendar.
+
+If reproduced under those conditions, capture the immediately preceding user
+interaction and treat it as new release-candidate evidence.
