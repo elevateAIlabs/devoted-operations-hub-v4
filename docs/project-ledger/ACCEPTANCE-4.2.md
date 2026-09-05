@@ -794,3 +794,151 @@ PASSED
 
 The integrated 4.2 localhost release-candidate acceptance should continue into
 the remaining product surfaces before the final Foundry deployment gate.
+
+
+---
+
+## 4.2 Current-Architecture Test Gate Correction
+
+**Status:** TEST-HARNESS CORRECTION / NO APPLICATION BEHAVIOR CHANGE
+
+**Date:** 2026-09-05
+
+During the final 4.2 **Deployment Gate**
+*(final validation before production deployment)*, the canonical contract tests
+and production Next.js build passed, but the repository-level `npm test`
+command subsequently attempted to execute two older integration tests:
+
+- `tests/rendered-html.test.mjs`
+- `tests/owner-isolation.test.mjs`
+
+Both tests import:
+
+`dist/server/index.js`
+
+Read-only investigation confirmed that the current Devoted HQ deployment
+architecture no longer produces that artifact.
+
+The canonical Cloudflare application now uses:
+
+- Next.js production output;
+- OpenNext for Cloudflare;
+- `.open-next/worker.js` as the Worker entrypoint;
+- `wrangler.json` as the explicit Cloudflare deployment configuration.
+
+The historical `dist/server/index.js` tests therefore exercise a superseded
+Vinext / Sites-era packaged artifact rather than the current deployment
+artifact.
+
+### Decision
+
+The two historical tests are preserved in the repository but removed from the
+default `npm test` gate.
+
+They remain executable through:
+
+`npm run test:legacy-dist`
+
+The canonical `npm test` command now validates the active application
+architecture through:
+
+1. the Devoted HQ contract suites; and
+2. the production Next.js build.
+
+The 4.2 pre-deployment process separately continues to require:
+
+- OpenNext Cloudflare build;
+- existence of `.open-next/worker.js`;
+- Wrangler deployment dry-run;
+- canonical Git synchronization;
+- frozen regression-fixture verification;
+- local QA data-integrity verification.
+
+### Important Scope Boundary
+
+This correction does **not**:
+
+- delete the historical integration tests;
+- claim that their behavioral concerns are unimportant;
+- rewrite them to target OpenNext;
+- change application code;
+- change the **Schedule View** *(main Schedule screen)*;
+- change the **Weekly Agenda** *(full task list for the visible week)*;
+- change the **Item Drawer** *(right-side full item details panel)*;
+- mutate D1;
+- mutate R2;
+- change database schema;
+- deploy Cloudflare.
+
+Owner-isolation coverage should later receive a deliberate OpenNext-native
+integration-test replacement rather than a blind import-path substitution.
+
+### Release Disposition
+
+The missing `dist/server/index.js` artifact is classified as a legacy
+test-harness mismatch, not a 4.2 application regression.
+
+The corrected test gate must pass in full before the Foundry production
+deployment decision.
+
+
+### Confirmed Wrangler Configuration Redirect
+
+A subsequent read-only deployment inspection confirmed that the local file:
+
+`.wrangler/deploy/config.json`
+
+contains a redirected configuration path targeting:
+
+`dist/server/wrangler.json`
+
+The current repository does not contain:
+
+- `dist/`;
+- `dist/server/`; or
+- `dist/server/wrangler.json`.
+
+That redirect belongs to the superseded packaged-artifact architecture.
+
+The canonical root:
+
+`wrangler.json`
+
+remains present and explicitly targets:
+
+`.open-next/worker.js`
+
+An explicit Wrangler dry-run using:
+
+`npx wrangler deploy --config wrangler.json --dry-run`
+
+completed successfully.
+
+Wrangler recognized the expected current production bindings:
+
+- D1: `devotedhq-db-v4`;
+- R2: `devotedhq-r2-v4`;
+- Assets: `ASSETS`.
+
+### Canonical Deployment Rule
+
+For the current OpenNext architecture, 4.2 deployment validation and production
+deployment must explicitly use:
+
+`--config wrangler.json`
+
+This prevents stale local Wrangler redirect metadata from selecting a
+superseded deployment configuration.
+
+The stale `.wrangler/deploy/config.json` file is local runtime metadata and is
+not being deleted or modified as part of this release correction.
+
+### Disposition
+
+The earlier Wrangler dry-run failure is classified as:
+
+**STALE LOCAL DEPLOYMENT CONFIGURATION / NOT AN APPLICATION REGRESSION**
+
+The explicit canonical Wrangler configuration passed dry-run validation.
+
+No application behavior changed.
