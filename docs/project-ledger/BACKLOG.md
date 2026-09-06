@@ -1102,3 +1102,89 @@ See:
 Origin:
 
 4.2A5 Schedule QA investigation / OHO localhost testing.
+
+---
+
+## Post-4.2 Production Acceptance Findings
+
+### P1 - Preserve operational status across completion reversal
+
+**Priority:** HIGH
+
+**Candidate release:** 4.2.1
+
+**Source:** OHO Field Report 003, 2026-09-06
+
+Current completion reversal can produce a lossy transition such as:
+
+`Inbox -> Completed -> Not Started`
+
+Required behavior:
+
+Completion must be reversible without destroying the item's previous
+operational status.
+
+Examples include:
+
+- `Inbox -> Completed -> Inbox`
+- `Waiting -> Completed -> Waiting`
+- `Ready -> Completed -> Ready`
+- `Scheduled -> Completed -> Scheduled`
+- `Blocked -> Completed -> Blocked`
+
+#### Acceptance direction
+
+- Determine all code paths capable of marking an item Completed.
+- Determine all code paths capable of reversing completion.
+- Determine whether current canonical data preserves enough information to
+  restore the previous state.
+- Do not solve this merely by replacing the `Not Started` fallback with
+  `Inbox`.
+- Prefer one canonical transition rule shared across UI surfaces.
+- Define an explicit fallback for historical completed items whose previous
+  status cannot be recovered.
+- Preserve completion timestamps and related semantics correctly.
+- Add regression coverage for multiple pre-completion statuses.
+- Verify Dashboard, Task List, Record Row, and Item Drawer behavior.
+- Do not introduce speculative workflow-state architecture beyond what the
+  defect requires.
+
+**Status:** OPEN / HIGH-PRIORITY INVESTIGATION
+
+---
+
+### P2 - Remove Work Block from active Schedule projection unless justified
+
+**Priority:** MEDIUM
+
+**Source:** OHO Field Report 003, 2026-09-06
+
+Production inspection confirmed that a canonical item may appear once through
+its Work Block and again through its Due/Follow-Up operational position.
+
+This creates multiple calendar positions for one canonical item.
+
+Current OHO direction:
+
+- Due Date remains deadline truth.
+- Follow-Up remains post-due resurfacing.
+- Work Block is no longer materially used by OHO.
+- Work Block is already a deprecation candidate.
+
+#### Acceptance direction
+
+Investigate whether active Schedule projection should ignore Work Block while
+preserving existing stored Work Block data.
+
+Keep these decisions separate:
+
+1. whether Work Block appears in Schedule;
+2. whether Work Block remains editable;
+3. whether Work Block is hidden from the Item Drawer;
+4. whether Work Block is formally deprecated;
+5. whether historical Work Block data is ever migrated or removed.
+
+Do not mutate production Work Block data merely to remove its Schedule
+projection.
+
+**Status:** OPEN / PRODUCT-MODEL INVESTIGATION

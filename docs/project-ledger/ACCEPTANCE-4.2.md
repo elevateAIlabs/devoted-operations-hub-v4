@@ -942,3 +942,83 @@ The earlier Wrangler dry-run failure is classified as:
 The explicit canonical Wrangler configuration passed dry-run validation.
 
 No application behavior changed.
+
+---
+
+## 4.2 Production Deployment and OHO Smoke Acceptance
+
+**Status:** PRODUCTION DEPLOYED / OHO SMOKE ACCEPTANCE PASSED
+
+**Production acceptance date:** 2026-09-06
+
+**Canonical deployed Git commit:** `8bc8fc0`
+
+**Cloudflare Worker:** `devotedhqapp2-v4`
+
+**Cloudflare deployment version:**
+`e729d29a-2ac2-416a-ad1a-4ddaa11b97c3`
+
+### Deployment Result
+
+The final Foundry production deployment gate passed against canonical `main`.
+
+Validated before deployment:
+
+- canonical Git synchronization;
+- frozen regression fixture integrity;
+- current Worker, D1, R2, and Assets bindings;
+- canonical contract suites;
+- production Next.js build;
+- OpenNext Cloudflare build;
+- `.open-next/worker.js`;
+- explicit `wrangler.json` deployment dry-run;
+- local QA integrity at 105 records / 44 actions / 16 attachments.
+
+Production deployment completed successfully using the explicit canonical
+Wrangler configuration.
+
+No schema migration was run.
+
+No direct D1 data-mutation command was run.
+
+No direct R2 mutation command was run.
+
+### OHO Production Smoke Acceptance
+
+OHO subsequently exercised the deployed production application using live
+operational data.
+
+The following production behaviors passed:
+
+1. Devoted HQ loaded normally.
+2. Existing production data remained present.
+3. The **Schedule View** *(main Schedule screen)* loaded normally.
+4. Week View could be selected normally.
+5. The Week Calendar displayed Sunday through Saturday.
+6. **Schedule Cards** *(task boxes inside the calendar)* rendered normally.
+7. The **Weekly Agenda** *(full task list for the visible week)* appeared below
+   the Week Calendar.
+8. Weekly Agenda content corresponded to the visible week's workload.
+9. **Record Rows** *(individual items inside a list)* opened the correct
+   **Item Drawer** *(right-side full item details panel)*.
+10. Due, Follow-Up, and OVERDUE presentation behaved as expected during the
+    reviewed production examples.
+11. Month View and the **Selected Day Agenda** *(task list for one selected
+    date)* remained operational.
+12. Responsive / narrow-width Schedule behavior passed OHO inspection without
+    the seven-column calendar becoming an unusable horizontal-scroll layout.
+13. The Operations Tab loaded successfully and displayed the approved 4.2
+    terminology, including Project Readiness Pipeline, Needs Action, and
+    Project Readiness.
+
+### Release Disposition
+
+**Devoted HQ 4.2 Operational Clarity & Schedule Reliability is accepted in
+production.**
+
+Two additional OHO findings were discovered during production acceptance.
+
+Neither finding invalidates the accepted 4.2 Schedule release.
+
+Both findings are preserved below and in the canonical backlog so they cannot
+silently disappear from future release planning.

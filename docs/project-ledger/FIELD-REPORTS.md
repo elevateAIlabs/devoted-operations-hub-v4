@@ -720,3 +720,154 @@ Sunday-Saturday calendar weeks in 4.2A4
 See:
 
 `LOCAL-QA-DATA.md`
+
+---
+
+## OHO Field Report 003 - 4.2 Production Acceptance Findings
+
+**Date:** 2026-09-06
+
+**Environment:** Production
+
+**Context:** OHO production smoke acceptance following Devoted HQ 4.2
+deployment.
+
+### Finding 1 - Work Block independently creates a Schedule position
+
+OHO inspected the production item:
+
+`Judy Thomas - Potential Price Increase`
+
+At the time of inspection the item contained approximately:
+
+- Work Block: 2026-07-30 at 10:12 AM;
+- Due Date: 2026-09-09;
+- Follow-Up: 2026-09-14;
+- Status: Not Started.
+
+The item correctly appeared on September 9 through its Due Date.
+
+OHO then inspected July 30 and confirmed that the same canonical item also
+appeared there as a separate Work Block Schedule projection.
+
+This demonstrates that one canonical item can occupy multiple Schedule
+positions when Work Block and Due/Follow-Up semantics coexist.
+
+### OHO Assessment
+
+This behavior is internally consistent with the current implementation but is
+not considered desirable for the emerging operational model.
+
+OHO no longer materially uses Work Block and expects the field may eventually
+be hidden or deprecated.
+
+The preferred product direction to investigate is:
+
+- Due Date = deadline;
+- Follow-Up = post-due resurfacing;
+- Work Block = legacy/planning metadata unless a future validated workflow
+  establishes a distinct need for it.
+
+Work Block should not be allowed to create confusing duplicate Schedule
+presence merely because historical data remains populated.
+
+### Disposition
+
+**POST-4.2 PRODUCT-MODEL INVESTIGATION / NON-BLOCKING**
+
+Do not delete or mutate historical Work Block data merely to change Schedule
+presentation.
+
+Investigate removing Work Block from active Schedule projection independently
+from any later decision to hide, deprecate, migrate, or remove the underlying
+field.
+
+---
+
+### Finding 2 - Uncompleting an item loses its previous operational status
+
+During production smoke testing, OHO used:
+
+`AI Project Manager / Designer - Cold Outreach From "upmarket"`
+
+The item began with:
+
+`Status = Inbox`
+
+OHO verified two completion paths:
+
+1. completion through the list completion control; and
+2. manually changing Status to Completed through Edit Master Item in the
+   Item Drawer.
+
+Completion correctly removed the item from views such as Incomplete.
+
+However, after navigating to Completed and reversing completion through the
+list completion control, the item's status became:
+
+`Not Started`
+
+rather than returning to its previous status:
+
+`Inbox`
+
+Observed transition:
+
+`Inbox -> Completed -> Not Started`
+
+Expected reversible transition:
+
+`Inbox -> Completed -> Inbox`
+
+The same requirement logically applies to other meaningful pre-completion
+statuses such as Waiting, Ready, Scheduled, Blocked, or other supported
+operational states.
+
+### OHO Assessment
+
+Completion reversal is currently lossy.
+
+An accidental completion followed immediately by an uncompletion can silently
+rewrite authoritative workflow state.
+
+Changing the fallback from `Not Started` to `Inbox` alone is NOT considered a
+complete solution because that would still destroy prior states such as
+Waiting, Ready, Scheduled, or Blocked.
+
+### Required Product Contract
+
+**Completion must be reversible without destroying the item's prior
+operational status.**
+
+Examples:
+
+`Inbox -> Completed -> Inbox`
+
+`Waiting -> Completed -> Waiting`
+
+`Ready -> Completed -> Ready`
+
+`Scheduled -> Completed -> Scheduled`
+
+`Blocked -> Completed -> Blocked`
+
+The implementation approach must be investigated before modification.
+
+The preferred architecture should centralize completion-transition semantics
+so that completion initiated from a Record Row, Dashboard control, Task List,
+Item Drawer, or other interface follows the same canonical rule.
+
+Historical completed records for which the prior state cannot be recovered
+will require an explicit, documented fallback policy.
+
+### Disposition
+
+**HIGH-PRIORITY POST-4.2 DEFECT / 4.2.1 HOTFIX CANDIDATE**
+
+This finding should be evaluated before substantial further reliance on rapid
+completion/uncompletion toggling.
+
+It does not require rollback of the accepted 4.2 Schedule release.
+
+OHO manually restoring an affected item's correct operational status is a
+valid temporary recovery action until the canonical behavior is corrected.
