@@ -871,3 +871,283 @@ It does not require rollback of the accepted 4.2 Schedule release.
 
 OHO manually restoring an affected item's correct operational status is a
 valid temporary recovery action until the canonical behavior is corrected.
+
+---
+
+## OHO Field Report 004 - September Workflow and Operations Observations
+
+**Observation dates:** 2026-09-02 and 2026-09-04
+
+**Canonized:** 2026-09-07
+
+**Source:** Normal OHO use and field notes.
+
+**Context:** These observations predate or overlap the 4.2 release cycle. They
+are preserved as operational evidence. Current canonical terminology is used
+where appropriate, while historical terminology is retained when necessary to
+describe what OHO originally observed.
+
+### Observation 1 - Project status and Operations inclusion remain unclear
+
+OHO reported that the relationship among Projects, Project Status, Project
+Stage, and what appears in the Operations Tab is not sufficiently clear.
+
+The underlying questions include:
+
+- What causes a Project to appear in Operations?
+- What causes it to stop appearing there?
+- What role does Project Status play?
+- What role does Project Stage play?
+- Are Project Status and Project Stage intentionally independent?
+- Which conditions populate the Operations sections?
+- Can OHO predict the result before changing a Project?
+
+This remains an information-architecture and product-semantics question rather
+than a request to rename fields blindly.
+
+**Disposition:** OPEN / OPERATIONS INVESTIGATION
+
+---
+
+### Observation 2 - Follow-Up should occur after Due Date
+
+OHO reported that a Due Date should precede a Follow-Up Date because the
+Follow-Up concept does not make operational sense as post-due resurfacing when
+the Follow-Up is on or before the Due Date.
+
+4.2 subsequently established:
+
+- Due Date = deadline truth;
+- Follow-Up = optional post-due resurfacing date;
+- Follow-Up on or before Due Date is invalid for operational resurfacing.
+
+Current Schedule projection defensively ignores an invalid Follow-Up for
+resurfacing, but OHO's observation raises a separate UX/data-validation
+question:
+
+Should Devoted HQ prevent, reject, or clearly explain invalid Due Date /
+Follow-Up combinations at entry time rather than merely handling them
+defensively later?
+
+**Disposition:** OPEN / VALIDATION REQUIREMENT CANDIDATE
+
+---
+
+### Observation 3 - Operations summary/navigation needs clearer purpose
+
+OHO requested improved navigation from the Operations summary/dashboard area,
+including possible directional or drill-down controls.
+
+This should not be implemented as an isolated arrow treatment until the
+meaning and destination of the relevant summary elements are clarified.
+
+The broader question is what the Operations summary is communicating and what
+action OHO should be able to take from it.
+
+**Disposition:** OPEN / OPERATIONS UX INVESTIGATION
+
+---
+
+### Observation 4 - Needs Action and Project Readiness classification is unclear
+
+Historical OHO wording referred to:
+
+- "Operations Queue"; and
+- "What's Missing."
+
+4.2 changed the human-facing terminology to:
+
+- **Needs Action**; and
+- **Project Readiness**.
+
+The terminology change did not redesign the underlying classification logic.
+
+OHO still needs a predictable explanation of:
+
+- why an item appears in Needs Action;
+- why a Project appears in Project Readiness;
+- which canonical fields or conditions determine membership;
+- what removes an item from each section;
+- whether the current classifications correspond to useful operational
+  concepts.
+
+**Disposition:** OPEN / HIGH-VALUE OPERATIONS INVESTIGATION
+
+---
+
+### Observation 5 - Accounting requires broader strategic redesign
+
+OHO reported that the Accounting Tab should be reconsidered as part of a much
+larger question about how accounting and financial workflows fit within the
+Devoted HQ framework and Platform Constitution.
+
+This is not currently classified as a cosmetic Accounting Tab redesign.
+
+The future Foundry review should determine which financial capabilities Devoted
+HQ should:
+
+- own;
+- coordinate;
+- summarize;
+- link to;
+- orchestrate; or
+- deliberately leave inside specialized financial systems.
+
+The review should preserve the Platform Constitution's bias against rebuilding
+specialized systems without genuine operator or platform value.
+
+**Disposition:** OPEN / STRATEGIC FOUNDRY REVIEW
+
+---
+
+### Observation 6 - Quick Add created as Completed remained operationally incomplete
+
+**Observed:** 2026-09-02
+
+During Quick Add, OHO created a Task and selected a completed status during
+creation with the expectation that the item would immediately be treated as
+completed.
+
+Instead, the new item continued to appear in the Incomplete Task Filter until
+OHO used the circular completion control from the Incomplete list.
+
+The original OHO observation therefore indicates a possible disagreement
+between:
+
+- creation-time Status;
+- canonical completion state;
+- completion controls; and/or
+- Task Filter classification.
+
+This observation is now particularly relevant because OHO Field Report 003
+separately demonstrated a lossy completion reversal:
+
+`Inbox -> Completed -> Not Started`
+
+The two observations may share a root cause, but that has NOT yet been
+established.
+
+### Investigation requirement
+
+The 4.2.1 completion-state investigation should determine:
+
+- the authoritative definition of completion;
+- every UI path that marks an item complete;
+- every UI path that reverses completion;
+- how Quick Add initializes completed items;
+- how Item Drawer Status changes affect completion;
+- how the circular completion control affects Status and completion metadata;
+- how `completedAt` or equivalent persisted state participates;
+- how Task Filters determine Incomplete versus Completed;
+- whether multiple surfaces currently implement completion transitions
+  independently.
+
+Do not assume the Quick Add finding and completion-reversal finding have the
+same root cause until source inspection establishes that relationship.
+
+**Disposition:** HIGH PRIORITY / INCLUDE IN 4.2.1 INVESTIGATION
+
+---
+
+### Observation 7 - Reference Tab requires operator-maintained content
+
+OHO reported a need to update Reference information manually while working in
+the field.
+
+The desired capability includes:
+
+- editing existing Reference content;
+- updating existing Reference content;
+- removing existing Reference content;
+- creating new Reference content.
+
+The requirement is therefore broader than editing predefined tiles.
+
+OHO expects the Reference Tab to support operator-maintained operational
+knowledge rather than being limited to a fixed set of predefined information.
+
+**Disposition:** OPEN / FUTURE PRODUCT CAPABILITY
+
+---
+
+### Observation 8 - Sensitive Reference information requires a security boundary
+
+One OHO example for future Reference content was RBFCU banking / ACH
+information such as account and routing details.
+
+This is useful evidence for the Reference capability but introduces a security
+and data-governance requirement.
+
+The existence of a Reference CRUD capability must NOT automatically imply that
+ordinary Reference storage is an approved location for sensitive financial
+account information.
+
+Before sensitive financial information is supported, Foundry review should
+address:
+
+- access control;
+- storage boundary;
+- exposure through UI and APIs;
+- backups and exports;
+- workspace isolation;
+- auditability where appropriate;
+- whether Devoted HQ should store this class of information at all.
+
+**Disposition:** OPEN / SECURITY + PRODUCT REVIEW REQUIRED
+
+---
+
+### Observation 9 - Completed Knickerbocker Project remained in Project Readiness
+
+**Observed:** 2026-09-04
+
+Historical UI terminology at the time of observation was "What's Missing."
+The current canonical name for that section is **Project Readiness**.
+
+OHO observed that the Project:
+
+`Knickerbocker Xeriscape`
+
+was the only Project visible in that section.
+
+OHO then changed both:
+
+- Project Status to Completed; and
+- Project Stage to Completed.
+
+The Project remained visible in the section.
+
+OHO subsequently cleared Deadline and Follow-Up Date, but the Project still
+remained visible.
+
+This raised the question of what condition actually causes a Project to enter
+or leave the Project Readiness section.
+
+4.2 changed the section's terminology but intentionally did NOT redesign the
+underlying Operations classification logic. Therefore this observation should
+not be assumed to have been corrected by 4.2.
+
+### Investigation requirement
+
+A future Operations investigation should trace the actual classifier and
+document the role, if any, of:
+
+- Project Status;
+- Project Stage;
+- Due Date / Deadline;
+- Follow-Up;
+- missing project information;
+- linked actions;
+- readiness requirements;
+- completion state;
+- other canonical fields or derived conditions.
+
+The investigation should establish both:
+
+1. what the software currently does; and
+2. what operational concept Project Readiness should represent.
+
+Do not change the classifier merely to remove the Knickerbocker example until
+the current and intended semantics are understood.
+
+**Disposition:** OPEN / HIGH-VALUE 4.3 OPERATIONS INVESTIGATION

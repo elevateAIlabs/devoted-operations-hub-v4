@@ -1188,3 +1188,154 @@ Do not mutate production Work Block data merely to remove its Schedule
 projection.
 
 **Status:** OPEN / PRODUCT-MODEL INVESTIGATION
+
+---
+
+## September OHO Workflow Findings
+
+Source:
+
+`OHO Field Report 004 - September Workflow and Operations Observations`
+
+### 4.2.1 - Completion-state investigation expansion
+
+**Priority:** HIGH
+
+Expand the existing 4.2.1 completion-state reversibility investigation to
+include the 2026-09-02 Quick Add observation in which an item created with a
+Completed status remained in the Incomplete Task Filter until the separate
+completion control was used.
+
+The investigation must determine whether:
+
+- Status;
+- completion metadata;
+- Quick Add;
+- Item Drawer editing;
+- completion controls; and
+- Task Filter classification
+
+share one canonical completion transition or currently represent partially
+independent mechanisms.
+
+Do not assume a common root cause with the previously documented completion
+reversal defect until source inspection confirms it.
+
+**Status:** OPEN / 4.2.1 INVESTIGATION
+
+---
+
+### Due Date / Follow-Up entry validation
+
+**Priority:** MEDIUM
+
+4.2 established Follow-Up as post-due resurfacing.
+
+Investigate UI/data validation requiring a valid Follow-Up to occur after its
+Due Date.
+
+Current defensive Schedule behavior for invalid legacy values should remain
+separate from prospective entry validation.
+
+Questions include:
+
+- reject invalid entry;
+- prevent selection;
+- display validation feedback;
+- treatment of existing invalid legacy records.
+
+**Status:** OPEN / VALIDATION INVESTIGATION
+
+---
+
+### 4.3 - Operations semantics and classification
+
+**Priority:** HIGH
+
+Perform a deliberate Operations investigation before substantial Operations
+redesign.
+
+At minimum, establish current and intended relationships among:
+
+- Projects;
+- Project Status;
+- Project Stage;
+- Project Readiness Pipeline;
+- Needs Action;
+- Project Readiness;
+- Deadline / Due Date;
+- Follow-Up;
+- linked actions;
+- missing information;
+- completion state.
+
+Use the 2026-09-04 Knickerbocker Xeriscape observation as a concrete production
+case.
+
+The investigation should answer:
+
+- Why does an item enter each Operations section?
+- Why does it remain there?
+- What removes it?
+- Can OHO predict the behavior?
+- Does the classification represent an operationally useful concept?
+- Is any logic overfit to Devoted rather than modeled as a general capability?
+
+Do not redesign Operations solely from terminology or one production example.
+
+**Status:** OPEN / 4.3 CANDIDATE
+
+---
+
+### Operations summary navigation
+
+**Priority:** MEDIUM
+
+Investigate clearer navigation or drill-down from the Operations summary /
+dashboard area.
+
+OHO specifically suggested directional controls such as arrows.
+
+Determine the semantic destination and user task before selecting the visual
+control.
+
+**Status:** OPEN / OPERATIONS UX
+
+---
+
+### Reference Tab operator-managed content
+
+**Priority:** MEDIUM
+
+Evolve References toward operator-maintained operational knowledge.
+
+Candidate capability:
+
+- create Reference content;
+- view Reference content;
+- edit/update Reference content;
+- remove Reference content.
+
+Do not assume all Reference information has identical security requirements.
+
+Before allowing sensitive financial/account information, complete a Foundry
+security/product review covering storage, authorization, exposure, backup,
+export, and whether Devoted HQ should store that information at all.
+
+**Status:** OPEN / FUTURE FEATURE
+
+---
+
+### Accounting framework review
+
+**Priority:** STRATEGIC
+
+Reassess Accounting within the broader Devoted HQ product thesis and Platform
+Constitution.
+
+Determine what Devoted HQ should own versus coordinate, summarize, link,
+orchestrate, or leave to specialized financial systems.
+
+Avoid incremental cosmetic redesign before the product boundary is understood.
+
+**Status:** OPEN / FOUNDRY STRATEGIC REVIEW
